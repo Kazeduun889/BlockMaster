@@ -3,148 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky Blast Premium</title>
+    <title>Sky Blast RPG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-game: #020617;
+            --bg: #020617;
             --accent: #38bdf8;
-            --glass: rgba(255, 255, 255, 0.08);
             --text: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
         body {
             margin: 0; padding: 0;
-            background: var(--bg-game);
+            background: var(--bg);
             color: var(--text);
             font-family: -apple-system, system-ui, sans-serif;
             height: 100vh; overflow: hidden; touch-action: none;
         }
 
-        /* --- ФОН МЕНЮ (MESH GRADIENT) --- */
-        .menu-bg {
-            position: fixed; inset: 0; z-index: -1;
-            background-color: #020617;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(199,89%,48%,0.15) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(180,100%,50%,0.1) 0, transparent 50%),
-                radial-gradient(at 50% 100%, hsla(217,91%,60%,0.1) 0, transparent 50%);
+        /* --- МЕНЮ С ГРАДИЕНТОМ --- */
+        #menu-screen {
+            position: fixed; inset: 0; z-index: 100;
+            background: radial-gradient(at 0% 0%, #0c4a6e 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, #1e1b4b 0px, transparent 50%), #020617;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: 0.5s;
         }
 
         /* --- ПРОФИЛЬ --- */
-        .profile-badge {
-            position: absolute; top: 20px; left: 20px;
+        .profile {
+            position: absolute; top: 25px; left: 20px;
             display: flex; align-items: center; gap: 12px;
-            background: var(--glass); padding: 8px 15px;
-            border-radius: 20px; backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(15, 23, 42, 0.6); padding: 8px 16px;
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
         }
         .avatar {
-            width: 35px; height: 35px; background: #334155;
-            border-radius: 50%; border: 2px solid var(--accent);
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(45deg, #38bdf8, #818cf8);
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--accent);
         }
-        .lvl-wrap { display: flex; flex-direction: column; gap: 4px; }
-        .lvl-text { font-size: 10px; font-weight: 800; opacity: 0.6; }
-        .lvl-bar { width: 60px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-        .lvl-progress { width: 40%; height: 100%; background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+        .lvl-box { display: flex; flex-direction: column; gap: 3px; }
+        .lvl-txt { font-size: 10px; font-weight: 900; color: var(--accent); letter-spacing: 1px; }
+        .bar-bg { width: 70px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .bar-fill { width: 0%; height: 100%; background: var(--accent); box-shadow: 0 0 10px var(--accent); transition: 0.3s; }
 
-        /* --- МЕНЮ --- */
-        #menu-screen {
-            position: fixed; inset: 0;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; transition: 0.4s;
-        }
-
-        .best-score-container {
-            display: flex; align-items: center; gap: 8px;
-            margin-bottom: 30px; font-size: 16px; font-weight: 700; color: #94a3b8;
-        }
-
+        /* --- КАРТОЧКА РЕЖИМА --- */
         .mode-card {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(25px);
-            border-radius: 30px; padding: 25px;
-            width: 80%; max-width: 280px;
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(20px);
+            border-radius: 32px; padding: 25px; width: 280px;
             border: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 18px;
-            cursor: pointer; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5); cursor: pointer;
         }
-        .mode-icon-box {
-            width: 55px; height: 55px;
-            background: linear-gradient(135deg, #0ea5e9, #22d3ee);
-            border-radius: 15px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+        .icon-sq {
+            width: 50px; height: 50px; background: var(--accent); border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
         }
-        .mode-card h2 { margin: 0; font-size: 18px; font-weight: 800; }
-        .mode-card p { margin: 4px 0 0; font-size: 12px; opacity: 0.5; }
 
         /* --- ИГРА --- */
-        #game-screen {
-            display: none; flex-direction: column; align-items: center; width: 100%; height: 100%;
-            opacity: 0; transition: 0.5s;
-        }
-        .score-wrap { margin-top: 60px; text-align: center; }
-        #score { font-size: 56px; font-weight: 900; letter-spacing: -2px; }
-        .game-best { font-size: 12px; font-weight: 700; opacity: 0.4; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; opacity: 0; transition: 0.5s; }
+        .score-cont { margin-top: 60px; text-align: center; }
+        #score { font-size: 64px; font-weight: 900; line-height: 0.8; }
+        .best-cont { font-size: 12px; font-weight: 700; opacity: 0.5; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
-        #board-container {
-            margin-top: 30px; padding: 6px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+        #board-box {
+            margin-top: 30px; padding: 8px; background: rgba(255,255,255,0.02);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.05);
         }
-        #pieces-area { display: flex; gap: 10px; margin-top: 40px; }
-        .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.02); border-radius: 18px; display: flex; align-items: center; justify-content: center; }
+        #pieces-box { display: flex; gap: 12px; margin-top: 40px; }
+        .slot { width: 90px; height: 90px; background: var(--glass); border-radius: 20px; display: flex; align-items: center; justify-content: center; }
 
-        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.4)); }
+        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.5)); }
+
+        .game-over {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
     </style>
 </head>
 <body>
 
     <div id="menu-screen">
-        <div class="menu-bg"></div>
-        
-        <div class="profile-badge">
-            <div class="avatar"></div>
-            <div class="lvl-wrap">
-                <span class="lvl-text">LEVEL 1</span>
-                <div class="lvl-bar"><div class="lvl-progress"></div></div>
+        <div class="profile">
+            <div class="avatar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+            <div class="lvl-box">
+                <span class="lvl-txt" id="lvl-display">LVL 1</span>
+                <div class="bar-bg"><div class="bar-fill" id="xp-bar"></div></div>
             </div>
         </div>
 
-        <div class="best-score-container">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z" /></svg>
-            ЛУЧШИЙ СЧЕТ: <span id="best-menu">0</span>
+        <div style="margin-bottom: 40px; text-align: center;">
+            <div class="best-cont" style="opacity: 0.8; font-size: 14px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z" /></svg>
+                РЕКОРД: <span id="best-menu">0</span>
+            </div>
         </div>
 
         <div class="mode-card" onclick="startGame()">
-            <div class="mode-icon-box">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <div class="icon-sq">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
             </div>
             <div>
-                <h2>КЛАССИКА</h2>
-                <p>Бесконечная головоломка</p>
+                <h2 style="margin:0; font-size: 20px;">КЛАССИКА</h2>
+                <p style="margin:4px 0 0; opacity: 0.5;">Сложные блоки</p>
             </div>
         </div>
     </div>
 
     <div id="game-screen">
-        <div class="score-wrap">
+        <div class="score-cont">
             <div id="score">0</div>
-            <div class="game-best">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24" style="opacity: 0.6;"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z" /></svg>
+            <div class="best-cont">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z" /></svg>
                 РЕКОРД: <span id="best-game">0</span>
             </div>
         </div>
-
-        <div id="board-container">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-
-        <div id="pieces-area">
+        <div id="board-box"><canvas id="gameCanvas"></canvas></div>
+        <div id="pieces-box">
             <div class="slot" id="slot0"></div>
             <div class="slot" id="slot1"></div>
             <div class="slot" id="slot2"></div>
         </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <h1 style="font-size: 48px;">КОНЕЦ</h1>
+        <button onclick="location.reload()" style="background: var(--accent); border: none; padding: 15px 40px; border-radius: 20px; color: white; font-weight: 800; font-size: 18px;">ЗАНОВО</button>
     </div>
 
     <canvas id="drag-layer"></canvas>
@@ -159,100 +147,106 @@
     const dctx = dragCanvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
 
+    // --- ДАННЫЕ ИГРОКА ---
     let score = 0;
-    let bestScore = localStorage.getItem('skyBlastBest') || 0;
+    let bestScore = parseInt(localStorage.getItem('skyBlastBest')) || 0;
+    let xp = parseInt(localStorage.getItem('skyBlastXP')) || 0;
+    let level = parseInt(localStorage.getItem('skyBlastLvl')) || 1;
+
+    function saveStats() {
+        localStorage.setItem('skyBlastXP', xp);
+        localStorage.setItem('skyBlastLvl', level);
+        localStorage.setItem('skyBlastBest', bestScore);
+    }
+
+    function addXP(val) {
+        xp += val;
+        let xpNeeded = level * 1500; // Очень сложная прокачка
+        if (xp >= xpNeeded) {
+            xp = 0; level++;
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+        updateUI();
+        saveStats();
+    }
+
+    function updateUI() {
+        document.getElementById('lvl-display').innerText = `LVL ${level}`;
+        document.getElementById('xp-bar').style.width = (xp / (level * 1500) * 100) + '%';
+        document.getElementById('best-menu').innerText = bestScore;
+        document.getElementById('best-game').innerText = bestScore;
+    }
+
+    // --- ЛОГИКА ИГРЫ ---
     const GRID = 8;
     let cellSize = 0;
     let board = Array(GRID).fill().map(() => Array(GRID).fill(null));
     let pieces = [null, null, null];
-    
-    document.getElementById('best-menu').innerText = bestScore;
-    document.getElementById('best-game').innerText = bestScore;
-
     const colors = ['#0ea5e9', '#f43f5e', '#a855f7', '#f59e0b', '#10b981', '#6366f1'];
-
     const shapes = [
-        [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1, 1, 1]], 
-        [[1, 1, 0], [0, 1, 1]], [[1, 1], [1, 0]], [[1]],
-        [[1, 1, 1], [1, 0, 0]], [[0, 1, 0], [1, 1, 1]],
-        [[1, 1], [0, 1], [0, 1]], [[1, 1, 1], [0, 0, 1]]
+        [[1,1],[1,1]], [[1,1,1,1]], [[1,1,1]], [[1,1,0],[0,1,1]], 
+        [[1,1],[1,0]], [[1]], [[1,1,1],[1,0,0]], [[0,1,0],[1,1,1]]
     ];
 
     function startGame() {
         document.getElementById('menu-screen').style.opacity = '0';
         setTimeout(() => {
             document.getElementById('menu-screen').style.display = 'none';
-            const gs = document.getElementById('game-screen');
-            gs.style.display = 'flex';
-            setTimeout(() => gs.style.opacity = '1', 50);
-            initGame();
-        }, 400);
+            document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.opacity = '1';
+            initBoard();
+        }, 500);
     }
 
-    function initGame() {
-        const size = Math.min(window.innerWidth - 50, 340);
+    function initBoard() {
+        const size = Math.min(window.innerWidth - 60, 340);
         cellSize = size / GRID;
         canvas.width = size * dpr; canvas.height = size * dpr;
         canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
         ctx.scale(dpr, dpr);
         spawnPieces();
-        requestAnimationFrame(updateLoop);
+        updateUI();
+        requestAnimationFrame(gameLoop);
     }
 
     function spawnPieces() {
         for(let i=0; i<3; i++) {
-            pieces[i] = {
-                shape: shapes[Math.floor(Math.random()*shapes.length)],
-                color: colors[Math.floor(Math.random()*colors.length)],
-                used: false
-            };
-            drawSlot(i);
+            pieces[i] = { shape: shapes[Math.floor(Math.random()*shapes.length)], color: colors[Math.floor(Math.random()*colors.length)], used: false };
+            renderSlot(i);
         }
+        checkGameOver();
     }
 
-    function drawSlot(i) {
+    function renderSlot(i) {
         const slot = document.getElementById(`slot${i}`);
-        slot.innerHTML = '';
-        if(pieces[i].used) return;
+        slot.innerHTML = ''; if(pieces[i].used) return;
         const sCvs = document.createElement('canvas');
         sCvs.width = 80*dpr; sCvs.height = 80*dpr;
         sCvs.style.width = '80px'; sCvs.style.height = '80px';
         const sCtx = sCvs.getContext('2d');
-        sCtx.scale(dpr, dpr);
-        sCtx.fillStyle = pieces[i].color;
-        const pSize = 16;
-        const ox = (80 - pieces[i].shape[0].length*pSize)/2;
-        const oy = (80 - pieces[i].shape.length*pSize)/2;
+        sCtx.scale(dpr, dpr); sCtx.fillStyle = pieces[i].color;
+        const pSize = 16, ox = (80 - pieces[i].shape[0].length*pSize)/2, oy = (80 - pieces[i].shape.length*pSize)/2;
         pieces[i].shape.forEach((row, y) => row.forEach((v, x) => {
-            if(v) drawRoundedRect(sCtx, ox+x*pSize, oy+y*pSize, pSize-2, pSize-2, 4);
+            if(v) { sCtx.beginPath(); sCtx.roundRect(ox+x*pSize, oy+y*pSize, pSize-2, pSize-2, 4); sCtx.fill(); }
         }));
         sCvs.ontouchstart = (e) => startDrag(e, i);
         slot.appendChild(sCvs);
     }
 
-    function drawRoundedRect(c, x, y, w, h, r) {
-        c.beginPath(); c.roundRect(x, y, w, h, r); c.fill();
-    }
-
-    // --- ЛОГИКА ЗАХВАТА И СМЕЩЕНИЯ ---
-    let drag = { active: false, idx: null, x: 0, y: 0, gx: -1, gy: -1 };
+    // --- УПРАВЛЕНИЕ ---
+    let drag = { active: false, idx: null, x:0, y:0, gx:-1, gy:-1 };
 
     function startDrag(e, i) {
-        drag = { active: true, idx: i, x: e.touches[0].clientX, y: e.touches[0].clientY, gx: -1, gy: -1 };
+        drag = { active: true, idx: i, x: e.touches[0].clientX, y: e.touches[0].clientY, gx:-1, gy:-1 };
         tg.HapticFeedback.impactOccurred('light');
     }
 
     window.ontouchmove = (e) => {
         if(!drag.active) return;
-        const t = e.touches[0];
-        drag.x = t.clientX;
-        drag.y = t.clientY;
-        
+        drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
         const rect = canvas.getBoundingClientRect();
         const p = pieces[drag.idx];
-        
-        // Новая формула: палец находится ПОД фигурой. 
-        // GX вычисляется от центра фигуры. GY вычисляется выше пальца на 2.5 клетки.
+        // Точное позиционирование над пальцем
         drag.gx = Math.floor((drag.x - rect.left) / cellSize - p.shape[0].length / 2 + 0.5);
         drag.gy = Math.floor((drag.y - rect.top) / cellSize - p.shape.length - 1.5);
     };
@@ -261,16 +255,19 @@
         if(!drag.active) return;
         if(canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
             placePiece(drag.gx, drag.gy, drag.idx);
-            tg.HapticFeedback.notificationOccurred('success');
         }
         drag.active = false;
     };
 
+    // ГЛАВНЫЙ ФИКС: Клетки с анимацией (.anim) считаются ПУСТЫМИ
     function canPlace(gx, gy, shape) {
         if(gx < 0 || gy < 0 || gx + shape[0].length > GRID || gy + shape.length > GRID) return false;
         for(let y=0; y<shape.length; y++) {
             for(let x=0; x<shape[y].length; x++) {
-                if(shape[y][x] && board[gy+y][gx+x]) return false;
+                if(shape[y][x]) {
+                    const cell = board[gy+y][gx+x];
+                    if(cell && !cell.anim) return false;
+                }
             }
         }
         return true;
@@ -282,67 +279,81 @@
             if(v) board[gy+y][gx+x] = p.color;
         }));
         p.used = true;
+        addXP(p.shape.flat().filter(v=>v).length);
         document.getElementById(`slot${idx}`).innerHTML = '';
         checkLines();
         if(pieces.every(p => p.used)) spawnPieces();
+        else checkGameOver();
+        tg.HapticFeedback.impactOccurred('medium');
     }
 
     function checkLines() {
-        let rFull = [], cFull = [];
+        let rF = [], cF = [];
         for(let i=0; i<GRID; i++) {
-            if(board[i].every(v => v && !v.anim)) rFull.push(i);
-            if(board.map(r => r[i]).every(v => v && !v.anim)) cFull.push(i);
+            if(board[i].every(v => v && !v.anim)) rF.push(i);
+            if(board.map(r => r[i]).every(v => v && !v.anim)) cF.push(i);
         }
-        rFull.forEach(y => { for(let x=0; x<GRID; x++) animateCellOut(x, y); score += 80; });
-        cFull.forEach(x => { for(let y=0; y<GRID; y++) animateCellOut(x, y); score += 80; });
-        if(score > bestScore) { bestScore = score; localStorage.setItem('skyBlastBest', bestScore); document.getElementById('best-game').innerText = bestScore; }
+        rF.forEach(y => { for(let x=0; x<GRID; x++) { if(board[y][x]) { animateOut(x,y); addXP(10); score += 10; } } });
+        cF.forEach(x => { for(let y=0; y<GRID; y++) { if(board[y][x]) { animateOut(x,y); addXP(10); score += 10; } } });
+        if(score > bestScore) { bestScore = score; saveStats(); }
         document.getElementById('score').innerText = score;
     }
 
-    function animateCellOut(x, y) {
-        if(!board[y][x]) return;
-        const color = board[y][x];
+    function animateOut(x, y) {
+        const color = board[y][x].color || board[y][x];
         board[y][x] = { color, anim: 1 };
     }
 
-    function updateLoop() {
-        ctx.clearRect(0,0,GRID*cellSize, GRID*cellSize);
+    function checkGameOver() {
+        const anyPossible = pieces.some(p => {
+            if(!p || p.used) return false;
+            for(let y=0; y<=GRID-p.shape.length; y++) {
+                for(let x=0; x<=GRID-p.shape[0].length; x++) {
+                    if(canPlace(x, y, p.shape)) return true;
+                }
+            }
+            return false;
+        });
+        if(!anyPossible && pieces.some(p => p && !p.used)) {
+            document.getElementById('gameOver').style.display = 'flex';
+        }
+    }
+
+    function gameLoop() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
         for(let y=0; y<GRID; y++) {
             for(let x=0; x<GRID; x++) {
                 const cell = board[y][x];
-                ctx.fillStyle = 'rgba(255,255,255,0.04)';
+                ctx.fillStyle = 'rgba(255,255,255,0.03)';
                 let s = 1;
                 if(cell) {
                     ctx.fillStyle = cell.color || cell;
-                    if(cell.anim) { cell.anim -= 0.08; s = cell.anim; if(cell.anim <= 0) board[y][x] = null; }
+                    if(cell.anim) { cell.anim -= 0.1; s = cell.anim; if(cell.anim <= 0) board[y][x] = null; }
                 }
                 const o = (cellSize*(1-s))/2;
-                drawRoundedRect(ctx, x*cellSize+2+o, y*cellSize+2+o, (cellSize-4)*s, (cellSize-4)*s, 6*s);
+                ctx.beginPath(); ctx.roundRect(x*cellSize+2+o, y*cellSize+2+o, (cellSize-4)*s, (cellSize-4)*s, 6*s); ctx.fill();
             }
         }
         if(drag.active && canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.fillStyle = 'rgba(255,255,255,0.1)';
             pieces[drag.idx].shape.forEach((row, y) => row.forEach((v, x) => {
-                if(v) drawRoundedRect(ctx, (drag.gx+x)*cellSize+2, (drag.gy+y)*cellSize+2, cellSize-4, cellSize-4, 6);
+                if(v) { ctx.beginPath(); ctx.roundRect((drag.gx+x)*cellSize+2, (drag.gy+y)*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill(); }
             }));
         }
         if(drag.active) {
             dragCanvas.style.display = 'block';
-            const p = pieces[drag.idx];
-            const dw = p.shape[0].length * cellSize;
-            const dh = p.shape.length * cellSize;
+            const p = pieces[drag.idx], dw = p.shape[0].length * cellSize, dh = p.shape.length * cellSize;
             dragCanvas.width = dw*dpr; dragCanvas.height = dh*dpr;
             dragCanvas.style.width = dw+'px'; dragCanvas.style.height = dh+'px';
-            dragCanvas.style.left = (drag.x - dw/2)+'px';
-            dragCanvas.style.top = (drag.y - dh - cellSize*1.5)+'px';
-            dctx.setTransform(1,0,0,1,0,0); dctx.scale(dpr, dpr);
-            dctx.fillStyle = p.color;
+            dragCanvas.style.left = (drag.x - dw/2)+'px'; dragCanvas.style.top = (drag.y - dh - cellSize*1.5)+'px';
+            dctx.setTransform(1,0,0,1,0,0); dctx.scale(dpr, dpr); dctx.fillStyle = p.color;
             p.shape.forEach((row, y) => row.forEach((v, x) => {
-                if(v) drawRoundedRect(dctx, x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8);
+                if(v) { dctx.beginPath(); dctx.roundRect(x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8); dctx.fill(); }
             }));
-        } else { dragCanvas.style.display = 'none'; }
-        requestAnimationFrame(updateLoop);
+        } else dragCanvas.style.display = 'none';
+        requestAnimationFrame(gameLoop);
     }
+    updateUI();
 </script>
 </body>
 </html>

@@ -3,145 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky Blast Premium</title>
+    <title>Sky Blast Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-            --accent-blue: #0ea5e9;
-            --block-color: #38bdf8;
-            --text-dark: #0c4a6e;
-            --glass: rgba(255, 255, 255, 0.4);
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent: #38bdf8;
+            --text: #f8fafc;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background: var(--bg-gradient);
-            color: var(--text-dark);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow: hidden;
-            touch-action: none;
+            margin: 0; padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            height: 100vh; overflow: hidden; touch-action: none;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- ЭКРАН МЕНЮ --- */
+        /* --- Анимированный фон меню --- */
+        #bg-canvas {
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        }
+
+        /* --- Меню --- */
         #menu-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-gradient);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.4s ease;
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .logo {
-            font-size: 42px;
-            font-weight: 900;
-            color: var(--accent-blue);
-            margin-bottom: 50px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        .menu-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            padding: 40px 30px; border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center; width: 80%; max-width: 300px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
-        .mode-btn {
-            background: white;
-            padding: 20px 60px;
-            border-radius: 24px;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-dark);
-            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
-            border: none;
-            cursor: pointer;
-            transition: transform 0.2s;
+        .logo { font-size: 32px; font-weight: 900; margin-bottom: 30px; letter-spacing: -1px; }
+        .logo span { color: var(--accent); }
+
+        .mode-item {
+            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+            padding: 20px; border-radius: 25px;
+            display: flex; align-items: center; gap: 15px;
+            cursor: pointer; transition: 0.3s; border: none; width: 100%;
         }
+        .mode-item:active { transform: scale(0.95); }
+        .mode-icon { font-size: 30px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 15px; }
+        .mode-info { text-align: left; }
+        .mode-title { font-weight: 800; font-size: 18px; color: white; }
+        .mode-desc { font-size: 12px; opacity: 0.8; color: white; }
 
-        .mode-btn:active { transform: scale(0.95); }
-
-        /* --- ИГРОВОЙ ЭКРАН --- */
+        /* --- Игра --- */
         #game-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            height: 100%;
+            display: none; flex-direction: column; align-items: center; width: 100%; height: 100%;
+            opacity: 0; transition: 0.5s;
         }
 
-        #score-container {
-            margin-top: 20px;
-            padding: 4px 16px;
-            background: var(--glass);
-            border-radius: 12px;
-            backdrop-filter: blur(5px);
-        }
+        #score { font-size: 36px; font-weight: 900; margin-top: 40px; color: white; }
 
-        #score {
-            font-size: 24px;
-            font-weight: 900; /* Очень толстый шрифт */
-            letter-spacing: -1px;
+        #board-container {
+            position: relative; margin-top: 20px;
+            padding: 10px; background: rgba(255,255,255,0.05);
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
         }
-
-        #game-board {
-            position: relative;
-            margin-top: 30px;
-            background: var(--glass);
-            padding: 8px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-        }
-
-        canvas { display: block; border-radius: 12px; }
 
         #pieces-area {
-            display: flex;
-            gap: 15px;
-            margin-top: 40px;
-            height: 120px;
-            padding: 10px;
+            display: flex; gap: 10px; margin-top: 30px; height: 110px;
         }
-
         .slot {
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 100px; height: 100px; background: rgba(255,255,255,0.03);
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
         }
 
-        #drag-layer {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9999;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
-        }
+        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <!-- Стартовое меню -->
+    <canvas id="bg-canvas"></canvas>
+
     <div id="menu-screen">
-        <div class="logo">SKY BLAST</div>
-        <button class="mode-btn" onclick="startGame('classic')">CLASSIC</button>
+        <div class="logo">SKY<span>BLAST</span></div>
+        <div class="menu-card">
+            <button class="mode-item" onclick="startGame()">
+                <div class="mode-icon">💎</div>
+                <div class="mode-info">
+                    <div class="mode-title">CLASSIC</div>
+                    <div class="mode-desc">Набери макс. очков</div>
+                </div>
+            </button>
+        </div>
     </div>
 
-    <!-- Игровой экран -->
     <div id="game-screen">
-        <div id="score-container">
-            <span id="score">0</span>
+        <div id="score">0</div>
+        <div id="board-container">
+            <canvas id="gameCanvas"></canvas>
         </div>
-        
-        <div id="game-board">
-            <canvas id="mainCanvas"></canvas>
-        </div>
-
         <div id="pieces-area">
             <div class="slot" id="slot0"></div>
             <div class="slot" id="slot1"></div>
@@ -154,205 +118,234 @@
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.headerColor = '#e0f2fe';
 
-    let score = 0;
-    const GRID_COUNT = 8;
-    let grid = Array(GRID_COUNT).fill().map(() => Array(GRID_COUNT).fill(null));
-    let pieces = [null, null, null];
-    
-    const mainCanvas = document.getElementById('mainCanvas');
-    const mctx = mainCanvas.getContext('2d');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
     const dragCanvas = document.getElementById('drag-layer');
     const dctx = dragCanvas.getContext('2d');
-    
-    let dpr = window.devicePixelRatio || 1;
-    let logicalSize = 0;
-    let cellSize = 0;
+    const dpr = window.devicePixelRatio || 1;
 
-    const skyColors = ['#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#075985'];
+    let score = 0;
+    const GRID = 8;
+    let cellSize = 0;
+    let board = Array(GRID).fill().map(() => Array(GRID).fill(null));
+    let pieces = [null, null, null];
+    let animatingCells = []; // Для анимации убирания
+
+    const colors = {
+        blue: '#38bdf8', pink: '#f472b6', purple: '#a78bfa',
+        orange: '#fb923c', green: '#4ade80', yellow: '#facc15'
+    };
+    const colorList = Object.values(colors);
 
     const shapes = [
-        [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1, 1, 1]],
+        [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1, 1, 1]], 
         [[1, 1, 0], [0, 1, 1]], [[1, 1], [1, 0]], [[1]],
-        [[1, 1, 1], [1, 0, 0]], [[1, 1, 1], [0, 1, 0]]
+        [[1, 1, 1], [1, 0, 0]], [[0, 1, 0], [1, 1, 1]]
     ];
 
-    function startGame(mode) {
-        document.getElementById('menu-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            initBoard();
-        }, 400);
+    // Анимированный фон меню
+    const bgCvs = document.getElementById('bg-canvas');
+    const bgCtx = bgCvs.getContext('2d');
+    let particles = [];
+    function initBg() {
+        bgCvs.width = window.innerWidth; bgCvs.height = window.innerHeight;
+        for(let i=0; i<20; i++) particles.push({
+            x: Math.random()*bgCvs.width, y: Math.random()*bgCvs.height,
+            r: Math.random()*50+20, dx: Math.random()*0.5-0.25, dy: Math.random()*0.5-0.25
+        });
+    }
+    function drawBg() {
+        bgCtx.clearRect(0,0,bgCvs.width,bgCvs.height);
+        bgCtx.fillStyle = 'rgba(56, 189, 248, 0.05)';
+        particles.forEach(p => {
+            bgCtx.beginPath(); bgCtx.arc(p.x, p.y, p.r, 0, Math.PI*2); bgCtx.fill();
+            p.x += p.dx; p.y += p.dy;
+            if(p.x<0 || p.x>bgCvs.width) p.dx*=-1;
+            if(p.y<0 || p.y>bgCvs.height) p.dy*=-1;
+        });
+        requestAnimationFrame(drawBg);
     }
 
-    function initBoard() {
-        const screenWidth = window.innerWidth;
-        logicalSize = Math.min(screenWidth - 50, 360);
-        cellSize = logicalSize / GRID_COUNT;
+    function startGame() {
+        document.getElementById('menu-screen').style.opacity = '0';
+        document.getElementById('menu-screen').style.pointerEvents = 'none';
+        const gs = document.getElementById('game-screen');
+        gs.style.display = 'flex';
+        setTimeout(() => gs.style.opacity = '1', 50);
+        initGame();
+    }
 
-        // Настройка High-DPI
-        mainCanvas.width = logicalSize * dpr;
-        mainCanvas.height = logicalSize * dpr;
-        mainCanvas.style.width = logicalSize + 'px';
-        mainCanvas.style.height = logicalSize + 'px';
-        mctx.scale(dpr, dpr);
-
+    function initGame() {
+        const size = Math.min(window.innerWidth - 60, 350);
+        cellSize = size / GRID;
+        canvas.width = size * dpr; canvas.height = size * dpr;
+        canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+        ctx.scale(dpr, dpr);
         spawnPieces();
-        renderBoard();
+        updateLoop();
     }
 
     function spawnPieces() {
-        for (let i = 0; i < 3; i++) {
+        for(let i=0; i<3; i++) {
             pieces[i] = {
-                shape: shapes[Math.floor(Math.random() * shapes.length)],
-                color: skyColors[Math.floor(Math.random() * skyColors.length)],
+                shape: shapes[Math.floor(Math.random()*shapes.length)],
+                color: colorList[Math.floor(Math.random()*colorList.length)],
                 used: false
             };
             drawSlot(i);
         }
     }
 
-    function drawSlot(idx) {
-        const slot = document.getElementById(`slot${idx}`);
+    function drawSlot(i) {
+        const slot = document.getElementById(`slot${i}`);
         slot.innerHTML = '';
-        if (pieces[idx].used) return;
-
-        const cvs = document.createElement('canvas');
-        const sSize = 80;
-        cvs.width = sSize * dpr;
-        cvs.height = sSize * dpr;
-        cvs.style.width = sSize + 'px';
-        cvs.style.height = sSize + 'px';
-        const ctx = cvs.getContext('2d');
-        ctx.scale(dpr, dpr);
-
-        const p = pieces[idx];
-        const pCell = 18;
-        ctx.fillStyle = p.color;
-        
-        // Центрирование фигуры в слоте
-        const offsetX = (sSize - p.shape[0].length * pCell) / 2;
-        const offsetY = (sSize - p.shape.length * pCell) / 2;
-
-        p.shape.forEach((row, y) => {
-            row.forEach((v, x) => {
-                if (v) drawRoundedRect(ctx, offsetX + x*pCell, offsetY + y*pCell, pCell-2, pCell-2, 4);
-            });
-        });
-
-        cvs.ontouchstart = (e) => startDrag(e, idx);
-        slot.appendChild(cvs);
+        if(pieces[i].used) return;
+        const sCvs = document.createElement('canvas');
+        sCvs.width = 80*dpr; sCvs.height = 80*dpr;
+        sCvs.style.width = '80px'; sCvs.style.height = '80px';
+        const sCtx = sCvs.getContext('2d');
+        sCtx.scale(dpr, dpr);
+        sCtx.fillStyle = pieces[i].color;
+        const pSize = 16;
+        const ox = (80 - pieces[i].shape[0].length*pSize)/2;
+        const oy = (80 - pieces[i].shape.length*pSize)/2;
+        pieces[i].shape.forEach((row, y) => row.forEach((v, x) => {
+            if(v) drawRoundedRect(sCtx, ox+x*pSize, oy+y*pSize, pSize-2, pSize-2, 4);
+        }));
+        sCvs.ontouchstart = (e) => startDrag(e, i);
+        slot.appendChild(sCvs);
     }
 
-    function renderBoard() {
-        mctx.clearRect(0, 0, logicalSize, logicalSize);
-        for (let y = 0; y < GRID_COUNT; y++) {
-            for (let x = 0; x < GRID_COUNT; x++) {
-                mctx.fillStyle = grid[y][x] || 'rgba(255,255,255,0.3)';
-                drawRoundedRect(mctx, x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6);
-            }
-        }
+    function drawRoundedRect(c, x, y, w, h, r) {
+        c.beginPath(); c.roundRect(x, y, w, h, r); c.fill();
     }
 
-    function drawRoundedRect(ctx, x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.roundRect(x, y, w, h, r);
-        ctx.fill();
+    // --- Управление и Preview ---
+    let drag = { active: false, idx: null, x: 0, y: 0, gx: -1, gy: -1 };
+
+    function startDrag(e, i) {
+        drag = { active: true, idx: i, x: e.touches[0].clientX, y: e.touches[0].clientY, gx: -1, gy: -1 };
+        tg.HapticFeedback.impactOccurred('light');
     }
 
-    // Drag and Drop Logic
-    let isDragging = false;
-    let dragIdx = null;
-
-    function startDrag(e, idx) {
-        isDragging = true;
-        dragIdx = idx;
-        const p = pieces[idx];
+    window.ontouchmove = (e) => {
+        if(!drag.active) return;
+        drag.x = e.touches[0].clientX;
+        drag.y = e.touches[0].clientY;
         
-        dragCanvas.style.display = 'block';
-        const dSize = cellSize * p.shape[0].length;
-        const dHeight = cellSize * p.shape.length;
-        
-        dragCanvas.width = dSize * dpr;
-        dragCanvas.height = dHeight * dpr;
-        dragCanvas.style.width = dSize + 'px';
-        dragCanvas.style.height = dHeight + 'px';
-        
-        dctx.setTransform(1,0,0,1,0,0);
-        dctx.scale(dpr, dpr);
-        
-        dctx.fillStyle = p.color;
-        p.shape.forEach((row, y) => {
-            row.forEach((v, x) => {
-                if (v) drawRoundedRect(dctx, x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8);
-            });
-        });
-
-        moveDrag(e.touches[0]);
-        tg.HapticFeedback.impactOccurred('medium');
-    }
-
-    function moveDrag(touch) {
-        // Смещение вверх, чтобы фигура была видна над пальцем
-        dragCanvas.style.left = (touch.clientX - cellSize) + 'px';
-        dragCanvas.style.top = (touch.clientY - cellSize * 2.5) + 'px';
-    }
-
-    window.ontouchmove = (e) => { if (isDragging) moveDrag(e.touches[0]); };
-
-    window.ontouchend = (e) => {
-        if (!isDragging) return;
-        const touch = e.changedTouches[0];
-        const rect = mainCanvas.getBoundingClientRect();
-        
-        const gx = Math.round((touch.clientX - rect.left - cellSize/2) / cellSize);
-        const gy = Math.round((touch.clientY - rect.top - cellSize*2) / cellSize);
-
-        if (tryPlace(gx, gy, pieces[dragIdx])) {
-            pieces[dragIdx].used = true;
-            document.getElementById(`slot${dragIdx}`).innerHTML = '';
-            checkAndClear();
-            if (pieces.every(p => p.used)) spawnPieces();
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-        
-        isDragging = false;
-        dragCanvas.style.display = 'none';
-        renderBoard();
+        const rect = canvas.getBoundingClientRect();
+        // Смещение: палец по центру снизу фигуры
+        drag.gx = Math.floor((drag.x - rect.left) / cellSize - pieces[drag.idx].shape[0].length / 2);
+        drag.gy = Math.floor((drag.y - rect.top - cellSize * 2) / cellSize);
     };
 
-    function tryPlace(gx, gy, p) {
-        if (gx < 0 || gy < 0 || gx + p.shape[0].length > GRID_COUNT || gy + p.shape.length > GRID_COUNT) return false;
-        
-        for (let y = 0; y < p.shape.length; y++) {
-            for (let x = 0; x < p.shape[y].length; x++) {
-                if (p.shape[y][x] && grid[gy + y][gx + x]) return false;
+    window.ontouchend = () => {
+        if(!drag.active) return;
+        if(canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
+            placePiece(drag.gx, drag.gy, drag.idx);
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+        drag.active = false;
+    };
+
+    function canPlace(gx, gy, shape) {
+        if(gx < 0 || gy < 0 || gx + shape[0].length > GRID || gy + shape.length > GRID) return false;
+        for(let y=0; y<shape.length; y++) {
+            for(let x=0; x<shape[y].length; x++) {
+                if(shape[y][x] && board[gy+y][gx+x]) return false;
             }
         }
-
-        p.shape.forEach((row, y) => {
-            row.forEach((v, x) => {
-                if (v) grid[gy + y][gx + x] = p.color;
-            });
-        });
         return true;
     }
 
-    function checkAndClear() {
-        let rToClear = [], cToClear = [];
-        for (let i = 0; i < GRID_COUNT; i++) {
-            if (grid[i].every(v => v !== null)) rToClear.push(i);
-            if (grid.map(row => row[i]).every(v => v !== null)) cToClear.push(i);
+    function placePiece(gx, gy, idx) {
+        const p = pieces[idx];
+        p.shape.forEach((row, y) => row.forEach((v, x) => {
+            if(v) board[gy+y][gx+x] = p.color;
+        }));
+        p.used = true;
+        document.getElementById(`slot${idx}`).innerHTML = '';
+        checkLines();
+        if(pieces.every(p => p.used)) spawnPieces();
+    }
+
+    function checkLines() {
+        let rFull = [], cFull = [];
+        for(let i=0; i<GRID; i++) {
+            if(board[i].every(v => v && !v.anim)) rFull.push(i);
+            if(board.map(r => r[i]).every(v => v && !v.anim)) cFull.push(i);
         }
-
-        rToClear.forEach(y => { for(let x=0; x<GRID_COUNT; x++) grid[y][x] = null; score += 10; });
-        cToClear.forEach(x => { for(let y=0; y<GRID_COUNT; y++) grid[y][x] = null; score += 10; });
-
+        
+        rFull.forEach(y => {
+            for(let x=0; x<GRID; x++) animateCellOut(x, y);
+            score += 100;
+        });
+        cFull.forEach(x => {
+            for(let y=0; y<GRID; y++) animateCellOut(x, y);
+            score += 100;
+        });
         document.getElementById('score').innerText = score;
     }
 
+    function animateCellOut(x, y) {
+        if(!board[y][x]) return;
+        const color = board[y][x];
+        board[y][x] = { color, anim: 1 }; // 1 -> 0 (scale)
+    }
+
+    function updateLoop() {
+        ctx.clearRect(0,0,GRID*cellSize, GRID*cellSize);
+        
+        // Рисуем сетку
+        for(let y=0; y<GRID; y++) {
+            for(let x=0; x<GRID; x++) {
+                const cell = board[y][x];
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                if(cell) {
+                    ctx.fillStyle = cell.color || cell;
+                    if(cell.anim) {
+                        cell.anim -= 0.1;
+                        if(cell.anim <= 0) board[y][x] = null;
+                    }
+                }
+                const s = cell?.anim ? cell.anim : 1;
+                const offset = (cellSize * (1-s))/2;
+                drawRoundedRect(ctx, x*cellSize+2+offset, y*cellSize+2+offset, (cellSize-4)*s, (cellSize-4)*s, 6*s);
+            }
+        }
+
+        // Preview (Призрак)
+        if(drag.active && canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            pieces[drag.idx].shape.forEach((row, y) => row.forEach((v, x) => {
+                if(v) drawRoundedRect(ctx, (drag.gx+x)*cellSize+2, (drag.gy+y)*cellSize+2, cellSize-4, cellSize-4, 6);
+            }));
+        }
+
+        // Drag Layer
+        if(drag.active) {
+            dragCanvas.style.display = 'block';
+            const p = pieces[drag.idx];
+            const dw = p.shape[0].length * cellSize;
+            const dh = p.shape.length * cellSize;
+            dragCanvas.width = dw*dpr; dragCanvas.height = dh*dpr;
+            dragCanvas.style.width = dw+'px'; dragCanvas.style.height = dh+'px';
+            dragCanvas.style.left = (drag.x - dw/2)+'px';
+            dragCanvas.style.top = (drag.y - dh - 50)+'px';
+            dctx.scale(dpr, dpr);
+            dctx.fillStyle = p.color;
+            p.shape.forEach((row, y) => row.forEach((v, x) => {
+                if(v) drawRoundedRect(dctx, x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8);
+            }));
+        } else {
+            dragCanvas.style.display = 'none';
+        }
+
+        requestAnimationFrame(updateLoop);
+    }
+
+    initBg(); drawBg();
 </script>
 </body>
 </html>

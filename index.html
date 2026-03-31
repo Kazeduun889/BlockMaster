@@ -3,147 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Block Blast TMA 0.1</title>
+    <title>Sky Block Blast</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #121212;
-            --grid-color: #1e1e1e;
-            --cell-empty: #2a2a2a;
+            --bg-color: #0a192f;        /* Глубокий темно-синий */
+            --grid-bg: #112240;        /* Цвет ячеек поля */
+            --accent-blue: #00d2ff;    /* Небесно-голубой */
+            --soft-blue: #81d4fa;      /* Мягкий голубой */
+            --text-color: #e6f1ff;
         }
+
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
-            color: white;
-            font-family: sans-serif;
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             touch-action: none;
             overflow: hidden;
+            height: 100vh;
         }
-        #ui {
-            margin-top: 20px;
-            font-size: 24px;
-            font-weight: bold;
+
+        #score {
+            margin-top: 15px;
+            font-size: 32px;
+            font-weight: 300;
+            opacity: 0.9;
+            letter-spacing: 2px;
         }
+
         #game-container {
             position: relative;
             margin-top: 20px;
+            touch-action: none;
         }
+
         canvas {
-            background: var(--grid-color);
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: block;
+            border-radius: 12px;
         }
+
         #pieces-container {
             display: flex;
             justify-content: space-around;
+            align-items: center;
             width: 100%;
             max-width: 400px;
-            margin-top: 30px;
+            margin-top: 40px;
             height: 120px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
         }
-        .piece-canvas {
-            cursor: grab;
-            transition: transform 0.1s;
+
+        .piece-slot {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Слой для перетаскиваемой фигуры */
+        #drag-canvas {
+            position: fixed;
+            pointer-events: none;
+            display: none;
+            z-index: 100;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
         }
     </style>
 </head>
 <body>
 
-    <div id="ui">Score: <span id="score">0</span></div>
+    <div id="score">0</div>
     
     <div id="game-container">
         <canvas id="gridCanvas"></canvas>
     </div>
 
     <div id="pieces-container">
-        <canvas id="p1" class="piece-canvas"></canvas>
-        <canvas id="p2" class="piece-canvas"></canvas>
-        <canvas id="p3" class="piece-canvas"></canvas>
+        <div class="piece-slot" id="slot0"></div>
+        <div class="piece-slot" id="slot1"></div>
+        <div class="piece-slot" id="slot2"></div>
     </div>
+
+    <canvas id="drag-canvas"></canvas>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
+    tg.backgroundColor = '#0a192f';
 
     const GRID_SIZE = 8;
-    const CELL_MARGIN = 4;
+    const CELL_GAP = 4;
     let score = 0;
     
     const canvas = document.getElementById('gridCanvas');
     const ctx = canvas.getContext('2d');
-    const pCanvases = [document.getElementById('p1'), document.getElementById('p2'), document.getElementById('p3')];
+    const dragCanvas = document.getElementById('drag-canvas');
+    const dctx = dragCanvas.getContext('2d');
     
     let cellSize = 0;
     let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null));
     let pieces = [null, null, null];
     
-    // Цвета блоков
-    const colors = ['#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', '#007AFF', '#5856D6'];
+    // Мягкая голубая палитра
+    const colors = ['#4fc3f7', '#29b6f6', '#03a9f4', '#039be5', '#0288d1', '#81d4fa'];
 
-    // Шаблоны фигур (0.1 версия)
     const shapes = [
-        [[1, 1], [1, 1]], // Квадрат
-        [[1, 1, 1, 1]],    // Линия
-        [[1, 1, 1]],       // Линия 3
-        [[1, 1], [1, 0]], // L-образная маленькая
-        [[1, 0], [1, 0], [1, 1]], // L
-        [[1]] // Точка
+        [[1, 1], [1, 1]], 
+        [[1, 1, 1]], 
+        [[1, 1, 1, 1]],
+        [[1, 1], [1, 0]],
+        [[1, 1, 1], [0, 1, 0]],
+        [[1, 0], [1, 0], [1, 1]],
+        [[1, 1], [0, 1], [0, 1]],
+        [[1]]
     ];
 
     function init() {
-        const width = Math.min(window.innerWidth - 40, 400);
-        canvas.width = width;
-        canvas.height = width;
-        cellSize = width / GRID_SIZE;
+        const screenWidth = window.innerWidth;
+        const boardSize = Math.min(screenWidth - 40, 400);
+        canvas.width = boardSize;
+        canvas.height = boardSize;
+        cellSize = boardSize / GRID_SIZE;
         
         spawnPieces();
-        draw();
+        drawGrid();
     }
 
     function spawnPieces() {
-        pieces = pieces.map(() => {
+        for (let i = 0; i < 3; i++) {
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
             const color = colors[Math.floor(Math.random() * colors.length)];
-            return { shape, color, used: false };
-        });
-        renderPieces();
+            pieces[i] = { shape, color, used: false };
+            renderPieceInSlot(i);
+        }
     }
 
-    function renderPieces() {
-        pCanvases.forEach((pCanvas, i) => {
-            const pCtx = pCanvas.getContext('2d');
-            pCanvas.width = 100;
-            pCanvas.height = 100;
-            const piece = pieces[i];
-            
-            if (!piece || piece.used) {
-                pCtx.clearRect(0, 0, 100, 100);
-                return;
-            }
+    function renderPieceInSlot(index) {
+        const slot = document.getElementById(`slot${index}`);
+        slot.innerHTML = '';
+        if (pieces[index].used) return;
 
-            const pCellSize = 20;
-            pCtx.fillStyle = piece.color;
-            piece.shape.forEach((row, y) => {
-                row.forEach((cell, x) => {
-                    if (cell) {
-                        drawRoundedRect(pCtx, x * pCellSize + 10, y * pCellSize + 10, pCellSize - 2, pCellSize - 2, 4);
-                    }
-                });
+        const pCanvas = document.createElement('canvas');
+        pCanvas.width = 80;
+        pCanvas.height = 80;
+        const pCtx = pCanvas.getContext('2d');
+        
+        const piece = pieces[index];
+        const pCellSize = 18;
+        
+        pCtx.fillStyle = piece.color;
+        piece.shape.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                if (cell) {
+                    drawRoundedRect(pCtx, x * pCellSize + 10, y * pCellSize + 10, pCellSize - 2, pCellSize - 2, 4);
+                }
             });
         });
+        
+        pCanvas.addEventListener('touchstart', (e) => startDrag(e, index));
+        slot.appendChild(pCanvas);
     }
 
-    function draw() {
+    function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
-                ctx.fillStyle = grid[y][x] || '#2a2a2a';
-                drawRoundedRect(ctx, x * cellSize + CELL_MARGIN, y * cellSize + CELL_MARGIN, 
-                               cellSize - CELL_MARGIN*2, cellSize - CELL_MARGIN*2, 5);
+                ctx.fillStyle = grid[y][x] || '#112240';
+                drawRoundedRect(ctx, x * cellSize + CELL_GAP, y * cellSize + CELL_GAP, 
+                               cellSize - CELL_GAP * 2, cellSize - CELL_GAP * 2, 6);
             }
         }
     }
@@ -154,95 +188,113 @@
         ctx.fill();
     }
 
-    // Логика перетаскивания (упрощенная для 0.1)
-    let dragItem = null;
-    let offset = { x: 0, y: 0 };
+    // ЛОГИКА DRAG AND DROP
+    let isDragging = false;
+    let currentPieceIdx = null;
+    let dragOffset = { x: 0, y: 0 };
 
-    pCanvases.forEach((pCanvas, index) => {
-        pCanvas.addEventListener('touchstart', (e) => {
-            if (pieces[index].used) return;
-            dragItem = index;
-            tg.HapticFeedback.impactOccurred('light');
+    function startDrag(e, index) {
+        isDragging = true;
+        currentPieceIdx = index;
+        const piece = pieces[index];
+        
+        dragCanvas.style.display = 'block';
+        dragCanvas.width = cellSize * 4;
+        dragCanvas.height = cellSize * 4;
+        
+        updateDragCanvas(e.touches[0].clientX, e.touches[0].clientY);
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+
+    function updateDragCanvas(touchX, touchY) {
+        dctx.clearRect(0, 0, dragCanvas.width, dragCanvas.height);
+        const piece = pieces[currentPieceIdx];
+        
+        // Рисуем увеличенную фигуру на отдельном канвасе
+        dctx.fillStyle = piece.color;
+        dctx.globalAlpha = 0.9;
+        piece.shape.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                if (cell) {
+                    drawRoundedRect(dctx, x * cellSize, y * cellSize, cellSize - 4, cellSize - 4, 8);
+                }
+            });
         });
-    });
+
+        // Смещение, чтобы фигура была видна НАД пальцем
+        dragCanvas.style.left = `${touchX - cellSize}px`;
+        dragCanvas.style.top = `${touchY - cellSize * 2}px`;
+    }
 
     window.addEventListener('touchmove', (e) => {
-        if (dragItem === null) return;
-        // В версии 0.1 мы просто фиксируем палец. 
-        // Для полноценного Drag-n-Drop нужно рисовать "призрак" фигуры под пальцем.
+        if (!isDragging) return;
+        updateDragCanvas(e.touches[0].clientX, e.touches[0].clientY);
     });
 
     window.addEventListener('touchend', (e) => {
-        if (dragItem === null) return;
+        if (!isDragging) return;
         
         const touch = e.changedTouches[0];
         const rect = canvas.getBoundingClientRect();
         
-        const x = Math.floor((touch.clientX - rect.left) / cellSize);
-        const y = Math.floor((touch.clientY - rect.top) / cellSize);
+        // Вычисляем координаты сетки (с учетом смещения "над пальцем")
+        const gridX = Math.round((touch.clientX - rect.left - cellSize/2) / cellSize);
+        const gridY = Math.round((touch.clientY - rect.top - cellSize*1.5) / cellSize);
 
-        if (tryPlace(x, y, pieces[dragItem])) {
-            pieces[dragItem].used = true;
+        if (tryPlace(gridX, gridY, pieces[currentPieceIdx])) {
+            pieces[currentPieceIdx].used = true;
             checkLines();
+            document.getElementById(`slot${currentPieceIdx}`).innerHTML = '';
+            
             if (pieces.every(p => p.used)) spawnPieces();
             tg.HapticFeedback.notificationOccurred('success');
         }
 
-        dragItem = null;
-        draw();
-        renderPieces();
+        isDragging = false;
+        dragCanvas.style.display = 'none';
+        drawGrid();
     });
 
     function tryPlace(gridX, gridY, piece) {
         if (gridX < 0 || gridY < 0) return false;
         
-        // Проверка влезет ли
+        // Проверка границ и занятости
         for (let y = 0; y < piece.shape.length; y++) {
             for (let x = 0; x < piece.shape[y].length; x++) {
                 if (piece.shape[y][x]) {
-                    if (gridY + y >= GRID_SIZE || gridX + x >= GRID_SIZE || grid[gridY + y][gridX + x]) {
-                        return false;
-                    }
+                    const ty = gridY + y;
+                    const tx = gridX + x;
+                    if (ty >= GRID_SIZE || tx >= GRID_SIZE || grid[ty][tx]) return false;
                 }
             }
         }
 
-        // Ставим
-        for (let y = 0; y < piece.shape.length; y++) {
-            for (let x = 0; x < piece.shape[y].length; x++) {
-                if (piece.shape[y][x]) {
-                    grid[gridY + y][gridX + x] = piece.color;
-                }
-            }
-        }
+        // Размещение
+        piece.shape.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                if (cell) grid[gridY + y][gridX + x] = piece.color;
+            });
+        });
         return true;
     }
 
     function checkLines() {
-        let rowsToDelete = [];
-        let colsToDelete = [];
+        let rows = [];
+        let cols = [];
 
-        // Проверка строк
-        for (let y = 0; y < GRID_SIZE; y++) {
-            if (grid[y].every(cell => cell !== null)) rowsToDelete.push(y);
-        }
-
-        // Проверка столбцов
-        for (let x = 0; x < GRID_SIZE; x++) {
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (grid[i].every(c => c !== null)) rows.push(i);
             let colFull = true;
-            for (let y = 0; y < GRID_SIZE; y++) {
-                if (grid[y][x] === null) colFull = false;
-            }
-            if (colFull) colsToDelete.push(x);
+            for (let j = 0; j < GRID_SIZE; j++) if (!grid[j][i]) colFull = false;
+            if (colFull) cols.push(i);
         }
 
-        // Удаление
-        rowsToDelete.forEach(y => {
-            for (let x = 0; x < GRID_SIZE; x++) grid[y][x] = null;
+        rows.forEach(y => {
+            for(let x=0; x<GRID_SIZE; x++) grid[y][x] = null;
             score += 10;
         });
-        colsToDelete.forEach(x => {
-            for (let y = 0; y < GRID_SIZE; y++) grid[y][x] = null;
+        cols.forEach(x => {
+            for(let y=0; y<GRID_SIZE; y++) grid[y][x] = null;
             score += 10;
         });
 

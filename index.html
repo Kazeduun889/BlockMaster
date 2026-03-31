@@ -2,182 +2,256 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sky Block Blast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sky Blast Premium</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #0a192f;        /* Глубокий темно-синий */
-            --grid-bg: #112240;        /* Цвет ячеек поля */
-            --accent-blue: #00d2ff;    /* Небесно-голубой */
-            --soft-blue: #81d4fa;      /* Мягкий голубой */
-            --text-color: #e6f1ff;
+            --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            --accent-blue: #0ea5e9;
+            --block-color: #38bdf8;
+            --text-dark: #0c4a6e;
+            --glass: rgba(255, 255, 255, 0.4);
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            touch-action: none;
             overflow: hidden;
-            height: 100vh;
+            touch-action: none;
+        }
+
+        /* --- ЭКРАН МЕНЮ --- */
+        #menu-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-gradient);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.4s ease;
+        }
+
+        .logo {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--accent-blue);
+            margin-bottom: 50px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .mode-btn {
+            background: white;
+            padding: 20px 60px;
+            border-radius: 24px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .mode-btn:active { transform: scale(0.95); }
+
+        /* --- ИГРОВОЙ ЭКРАН --- */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        #score-container {
+            margin-top: 20px;
+            padding: 4px 16px;
+            background: var(--glass);
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
         }
 
         #score {
-            margin-top: 15px;
-            font-size: 32px;
-            font-weight: 300;
-            opacity: 0.9;
-            letter-spacing: 2px;
+            font-size: 24px;
+            font-weight: 900; /* Очень толстый шрифт */
+            letter-spacing: -1px;
         }
 
-        #game-container {
+        #game-board {
             position: relative;
-            margin-top: 20px;
-            touch-action: none;
+            margin-top: 30px;
+            background: var(--glass);
+            padding: 8px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
         }
 
-        canvas {
-            display: block;
-            border-radius: 12px;
-        }
+        canvas { display: block; border-radius: 12px; }
 
-        #pieces-container {
+        #pieces-area {
             display: flex;
-            justify-content: space-around;
-            align-items: center;
-            width: 100%;
-            max-width: 400px;
+            gap: 15px;
             margin-top: 40px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px;
+            padding: 10px;
         }
 
-        .piece-slot {
+        .slot {
             width: 100px;
             height: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
-        /* Слой для перетаскиваемой фигуры */
-        #drag-canvas {
+        #drag-layer {
             position: fixed;
             pointer-events: none;
-            display: none;
-            z-index: 100;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+            z-index: 9999;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.15));
         }
     </style>
 </head>
 <body>
 
-    <div id="score">0</div>
-    
-    <div id="game-container">
-        <canvas id="gridCanvas"></canvas>
+    <!-- Стартовое меню -->
+    <div id="menu-screen">
+        <div class="logo">SKY BLAST</div>
+        <button class="mode-btn" onclick="startGame('classic')">CLASSIC</button>
     </div>
 
-    <div id="pieces-container">
-        <div class="piece-slot" id="slot0"></div>
-        <div class="piece-slot" id="slot1"></div>
-        <div class="piece-slot" id="slot2"></div>
+    <!-- Игровой экран -->
+    <div id="game-screen">
+        <div id="score-container">
+            <span id="score">0</span>
+        </div>
+        
+        <div id="game-board">
+            <canvas id="mainCanvas"></canvas>
+        </div>
+
+        <div id="pieces-area">
+            <div class="slot" id="slot0"></div>
+            <div class="slot" id="slot1"></div>
+            <div class="slot" id="slot2"></div>
+        </div>
     </div>
 
-    <canvas id="drag-canvas"></canvas>
+    <canvas id="drag-layer"></canvas>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.backgroundColor = '#0a192f';
+    tg.headerColor = '#e0f2fe';
 
-    const GRID_SIZE = 8;
-    const CELL_GAP = 4;
     let score = 0;
-    
-    const canvas = document.getElementById('gridCanvas');
-    const ctx = canvas.getContext('2d');
-    const dragCanvas = document.getElementById('drag-canvas');
-    const dctx = dragCanvas.getContext('2d');
-    
-    let cellSize = 0;
-    let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null));
+    const GRID_COUNT = 8;
+    let grid = Array(GRID_COUNT).fill().map(() => Array(GRID_COUNT).fill(null));
     let pieces = [null, null, null];
     
-    // Мягкая голубая палитра
-    const colors = ['#4fc3f7', '#29b6f6', '#03a9f4', '#039be5', '#0288d1', '#81d4fa'];
+    const mainCanvas = document.getElementById('mainCanvas');
+    const mctx = mainCanvas.getContext('2d');
+    const dragCanvas = document.getElementById('drag-layer');
+    const dctx = dragCanvas.getContext('2d');
+    
+    let dpr = window.devicePixelRatio || 1;
+    let logicalSize = 0;
+    let cellSize = 0;
+
+    const skyColors = ['#7dd3fc', '#38bdf8', '#0ea5e9', '#0284c7', '#075985'];
 
     const shapes = [
-        [[1, 1], [1, 1]], 
-        [[1, 1, 1]], 
-        [[1, 1, 1, 1]],
-        [[1, 1], [1, 0]],
-        [[1, 1, 1], [0, 1, 0]],
-        [[1, 0], [1, 0], [1, 1]],
-        [[1, 1], [0, 1], [0, 1]],
-        [[1]]
+        [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1, 1, 1]],
+        [[1, 1, 0], [0, 1, 1]], [[1, 1], [1, 0]], [[1]],
+        [[1, 1, 1], [1, 0, 0]], [[1, 1, 1], [0, 1, 0]]
     ];
 
-    function init() {
+    function startGame(mode) {
+        document.getElementById('menu-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            initBoard();
+        }, 400);
+    }
+
+    function initBoard() {
         const screenWidth = window.innerWidth;
-        const boardSize = Math.min(screenWidth - 40, 400);
-        canvas.width = boardSize;
-        canvas.height = boardSize;
-        cellSize = boardSize / GRID_SIZE;
-        
+        logicalSize = Math.min(screenWidth - 50, 360);
+        cellSize = logicalSize / GRID_COUNT;
+
+        // Настройка High-DPI
+        mainCanvas.width = logicalSize * dpr;
+        mainCanvas.height = logicalSize * dpr;
+        mainCanvas.style.width = logicalSize + 'px';
+        mainCanvas.style.height = logicalSize + 'px';
+        mctx.scale(dpr, dpr);
+
         spawnPieces();
-        drawGrid();
+        renderBoard();
     }
 
     function spawnPieces() {
         for (let i = 0; i < 3; i++) {
-            const shape = shapes[Math.floor(Math.random() * shapes.length)];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            pieces[i] = { shape, color, used: false };
-            renderPieceInSlot(i);
+            pieces[i] = {
+                shape: shapes[Math.floor(Math.random() * shapes.length)],
+                color: skyColors[Math.floor(Math.random() * skyColors.length)],
+                used: false
+            };
+            drawSlot(i);
         }
     }
 
-    function renderPieceInSlot(index) {
-        const slot = document.getElementById(`slot${index}`);
+    function drawSlot(idx) {
+        const slot = document.getElementById(`slot${idx}`);
         slot.innerHTML = '';
-        if (pieces[index].used) return;
+        if (pieces[idx].used) return;
 
-        const pCanvas = document.createElement('canvas');
-        pCanvas.width = 80;
-        pCanvas.height = 80;
-        const pCtx = pCanvas.getContext('2d');
+        const cvs = document.createElement('canvas');
+        const sSize = 80;
+        cvs.width = sSize * dpr;
+        cvs.height = sSize * dpr;
+        cvs.style.width = sSize + 'px';
+        cvs.style.height = sSize + 'px';
+        const ctx = cvs.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const p = pieces[idx];
+        const pCell = 18;
+        ctx.fillStyle = p.color;
         
-        const piece = pieces[index];
-        const pCellSize = 18;
-        
-        pCtx.fillStyle = piece.color;
-        piece.shape.forEach((row, y) => {
-            row.forEach((cell, x) => {
-                if (cell) {
-                    drawRoundedRect(pCtx, x * pCellSize + 10, y * pCellSize + 10, pCellSize - 2, pCellSize - 2, 4);
-                }
+        // Центрирование фигуры в слоте
+        const offsetX = (sSize - p.shape[0].length * pCell) / 2;
+        const offsetY = (sSize - p.shape.length * pCell) / 2;
+
+        p.shape.forEach((row, y) => {
+            row.forEach((v, x) => {
+                if (v) drawRoundedRect(ctx, offsetX + x*pCell, offsetY + y*pCell, pCell-2, pCell-2, 4);
             });
         });
-        
-        pCanvas.addEventListener('touchstart', (e) => startDrag(e, index));
-        slot.appendChild(pCanvas);
+
+        cvs.ontouchstart = (e) => startDrag(e, idx);
+        slot.appendChild(cvs);
     }
 
-    function drawGrid() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-                ctx.fillStyle = grid[y][x] || '#112240';
-                drawRoundedRect(ctx, x * cellSize + CELL_GAP, y * cellSize + CELL_GAP, 
-                               cellSize - CELL_GAP * 2, cellSize - CELL_GAP * 2, 6);
+    function renderBoard() {
+        mctx.clearRect(0, 0, logicalSize, logicalSize);
+        for (let y = 0; y < GRID_COUNT; y++) {
+            for (let x = 0; x < GRID_COUNT; x++) {
+                mctx.fillStyle = grid[y][x] || 'rgba(255,255,255,0.3)';
+                drawRoundedRect(mctx, x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6);
             }
         }
     }
@@ -188,120 +262,97 @@
         ctx.fill();
     }
 
-    // ЛОГИКА DRAG AND DROP
+    // Drag and Drop Logic
     let isDragging = false;
-    let currentPieceIdx = null;
-    let dragOffset = { x: 0, y: 0 };
+    let dragIdx = null;
 
-    function startDrag(e, index) {
+    function startDrag(e, idx) {
         isDragging = true;
-        currentPieceIdx = index;
-        const piece = pieces[index];
+        dragIdx = idx;
+        const p = pieces[idx];
         
         dragCanvas.style.display = 'block';
-        dragCanvas.width = cellSize * 4;
-        dragCanvas.height = cellSize * 4;
+        const dSize = cellSize * p.shape[0].length;
+        const dHeight = cellSize * p.shape.length;
         
-        updateDragCanvas(e.touches[0].clientX, e.touches[0].clientY);
-        tg.HapticFeedback.impactOccurred('medium');
-    }
-
-    function updateDragCanvas(touchX, touchY) {
-        dctx.clearRect(0, 0, dragCanvas.width, dragCanvas.height);
-        const piece = pieces[currentPieceIdx];
+        dragCanvas.width = dSize * dpr;
+        dragCanvas.height = dHeight * dpr;
+        dragCanvas.style.width = dSize + 'px';
+        dragCanvas.style.height = dHeight + 'px';
         
-        // Рисуем увеличенную фигуру на отдельном канвасе
-        dctx.fillStyle = piece.color;
-        dctx.globalAlpha = 0.9;
-        piece.shape.forEach((row, y) => {
-            row.forEach((cell, x) => {
-                if (cell) {
-                    drawRoundedRect(dctx, x * cellSize, y * cellSize, cellSize - 4, cellSize - 4, 8);
-                }
+        dctx.setTransform(1,0,0,1,0,0);
+        dctx.scale(dpr, dpr);
+        
+        dctx.fillStyle = p.color;
+        p.shape.forEach((row, y) => {
+            row.forEach((v, x) => {
+                if (v) drawRoundedRect(dctx, x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8);
             });
         });
 
-        // Смещение, чтобы фигура была видна НАД пальцем
-        dragCanvas.style.left = `${touchX - cellSize}px`;
-        dragCanvas.style.top = `${touchY - cellSize * 2}px`;
+        moveDrag(e.touches[0]);
+        tg.HapticFeedback.impactOccurred('medium');
     }
 
-    window.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        updateDragCanvas(e.touches[0].clientX, e.touches[0].clientY);
-    });
+    function moveDrag(touch) {
+        // Смещение вверх, чтобы фигура была видна над пальцем
+        dragCanvas.style.left = (touch.clientX - cellSize) + 'px';
+        dragCanvas.style.top = (touch.clientY - cellSize * 2.5) + 'px';
+    }
 
-    window.addEventListener('touchend', (e) => {
+    window.ontouchmove = (e) => { if (isDragging) moveDrag(e.touches[0]); };
+
+    window.ontouchend = (e) => {
         if (!isDragging) return;
-        
         const touch = e.changedTouches[0];
-        const rect = canvas.getBoundingClientRect();
+        const rect = mainCanvas.getBoundingClientRect();
         
-        // Вычисляем координаты сетки (с учетом смещения "над пальцем")
-        const gridX = Math.round((touch.clientX - rect.left - cellSize/2) / cellSize);
-        const gridY = Math.round((touch.clientY - rect.top - cellSize*1.5) / cellSize);
+        const gx = Math.round((touch.clientX - rect.left - cellSize/2) / cellSize);
+        const gy = Math.round((touch.clientY - rect.top - cellSize*2) / cellSize);
 
-        if (tryPlace(gridX, gridY, pieces[currentPieceIdx])) {
-            pieces[currentPieceIdx].used = true;
-            checkLines();
-            document.getElementById(`slot${currentPieceIdx}`).innerHTML = '';
-            
+        if (tryPlace(gx, gy, pieces[dragIdx])) {
+            pieces[dragIdx].used = true;
+            document.getElementById(`slot${dragIdx}`).innerHTML = '';
+            checkAndClear();
             if (pieces.every(p => p.used)) spawnPieces();
             tg.HapticFeedback.notificationOccurred('success');
         }
-
+        
         isDragging = false;
         dragCanvas.style.display = 'none';
-        drawGrid();
-    });
+        renderBoard();
+    };
 
-    function tryPlace(gridX, gridY, piece) {
-        if (gridX < 0 || gridY < 0) return false;
+    function tryPlace(gx, gy, p) {
+        if (gx < 0 || gy < 0 || gx + p.shape[0].length > GRID_COUNT || gy + p.shape.length > GRID_COUNT) return false;
         
-        // Проверка границ и занятости
-        for (let y = 0; y < piece.shape.length; y++) {
-            for (let x = 0; x < piece.shape[y].length; x++) {
-                if (piece.shape[y][x]) {
-                    const ty = gridY + y;
-                    const tx = gridX + x;
-                    if (ty >= GRID_SIZE || tx >= GRID_SIZE || grid[ty][tx]) return false;
-                }
+        for (let y = 0; y < p.shape.length; y++) {
+            for (let x = 0; x < p.shape[y].length; x++) {
+                if (p.shape[y][x] && grid[gy + y][gx + x]) return false;
             }
         }
 
-        // Размещение
-        piece.shape.forEach((row, y) => {
-            row.forEach((cell, x) => {
-                if (cell) grid[gridY + y][gridX + x] = piece.color;
+        p.shape.forEach((row, y) => {
+            row.forEach((v, x) => {
+                if (v) grid[gy + y][gx + x] = p.color;
             });
         });
         return true;
     }
 
-    function checkLines() {
-        let rows = [];
-        let cols = [];
-
-        for (let i = 0; i < GRID_SIZE; i++) {
-            if (grid[i].every(c => c !== null)) rows.push(i);
-            let colFull = true;
-            for (let j = 0; j < GRID_SIZE; j++) if (!grid[j][i]) colFull = false;
-            if (colFull) cols.push(i);
+    function checkAndClear() {
+        let rToClear = [], cToClear = [];
+        for (let i = 0; i < GRID_COUNT; i++) {
+            if (grid[i].every(v => v !== null)) rToClear.push(i);
+            if (grid.map(row => row[i]).every(v => v !== null)) cToClear.push(i);
         }
 
-        rows.forEach(y => {
-            for(let x=0; x<GRID_SIZE; x++) grid[y][x] = null;
-            score += 10;
-        });
-        cols.forEach(x => {
-            for(let y=0; y<GRID_SIZE; y++) grid[y][x] = null;
-            score += 10;
-        });
+        rToClear.forEach(y => { for(let x=0; x<GRID_COUNT; x++) grid[y][x] = null; score += 10; });
+        cToClear.forEach(x => { for(let y=0; y<GRID_COUNT; y++) grid[y][x] = null; score += 10; });
 
         document.getElementById('score').innerText = score;
     }
 
-    init();
 </script>
 </body>
 </html>

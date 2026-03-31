@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky Blast Pro</title>
+    <title>Sky Blast Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --bg: #020617;
+            --card-bg: rgba(30, 41, 59, 0.5);
             --accent: #38bdf8;
             --text: #f8fafc;
         }
@@ -16,96 +16,355 @@
         body {
             margin: 0; padding: 0;
             background: var(--bg);
+            background-image: radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.1) 0px, transparent 50%);
             color: var(--text);
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             height: 100vh; overflow: hidden; touch-action: none;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- Анимированный фон меню --- */
-        #bg-canvas {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
-        }
-
-        /* --- Меню --- */
+        /* --- МЕНЮ --- */
         #menu-screen {
             position: fixed; inset: 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 100; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100; transition: 0.5s ease;
         }
 
-        .menu-card {
+        .menu-content { width: 85%; max-width: 320px; }
+
+        .best-score-label {
+            text-align: center; font-size: 14px; font-weight: 700;
+            color: var(--accent); text-transform: uppercase;
+            letter-spacing: 2px; margin-bottom: 40px; opacity: 0.8;
+        }
+
+        .mode-card {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
-            padding: 40px 30px; border-radius: 40px;
+            border-radius: 32px;
+            padding: 24px;
             border: 1px solid rgba(255,255,255,0.1);
-            text-align: center; width: 80%; max-width: 300px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 20px;
+            cursor: pointer; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            position: relative; overflow: hidden;
         }
 
-        .logo { font-size: 32px; font-weight: 900; margin-bottom: 30px; letter-spacing: -1px; }
-        .logo span { color: var(--accent); }
-
-        .mode-item {
-            background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
-            padding: 20px; border-radius: 25px;
-            display: flex; align-items: center; gap: 15px;
-            cursor: pointer; transition: 0.3s; border: none; width: 100%;
+        .mode-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: translateX(-100%); transition: 0.5s;
         }
-        .mode-item:active { transform: scale(0.95); }
-        .mode-icon { font-size: 30px; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 15px; }
-        .mode-info { text-align: left; }
-        .mode-title { font-weight: 800; font-size: 18px; color: white; }
-        .mode-desc { font-size: 12px; opacity: 0.8; color: white; }
 
-        /* --- Игра --- */
+        .mode-card:active { transform: scale(0.96); border-color: var(--accent); }
+        .mode-card:active::after { transform: translateX(100%); }
+
+        .icon-box {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border-radius: 18px; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 16px rgba(14, 165, 233, 0.3);
+        }
+
+        .mode-info h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+        .mode-info p { margin: 4px 0 0; font-size: 13px; opacity: 0.6; font-weight: 500; }
+
+        /* --- ИГРА --- */
         #game-screen {
             display: none; flex-direction: column; align-items: center; width: 100%; height: 100%;
             opacity: 0; transition: 0.5s;
         }
 
-        #score { font-size: 36px; font-weight: 900; margin-top: 40px; color: white; }
+        .score-box { margin-top: 30px; text-align: center; }
+        #score { font-size: 48px; font-weight: 900; line-height: 1; letter-spacing: -2px; }
+        .best-label { font-size: 12px; font-weight: 800; opacity: 0.4; text-transform: uppercase; margin-top: 5px; }
 
-        #board-container {
-            position: relative; margin-top: 20px;
-            padding: 10px; background: rgba(255,255,255,0.05);
-            border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
+        #board-wrap {
+            position: relative; margin-top: 25px;
+            padding: 8px; background: rgba(255,255,255,0.03);
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
         }
 
         #pieces-area {
-            display: flex; gap: 10px; margin-top: 30px; height: 110px;
+            display: flex; gap: 12px; margin-top: 35px;
         }
         .slot {
-            width: 100px; height: 100px; background: rgba(255,255,255,0.03);
+            width: 95px; height: 95px; background: rgba(255,255,255,0.03);
             border-radius: 20px; display: flex; align-items: center; justify-content: center;
         }
 
-        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; }
+        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.3)); }
     </style>
 </head>
 <body>
 
-    <canvas id="bg-canvas"></canvas>
-
+    <!-- Меню -->
     <div id="menu-screen">
-        <div class="logo">SKY<span>BLAST</span></div>
-        <div class="menu-card">
-            <button class="mode-item" onclick="startGame()">
-                <div class="mode-icon">💎</div>
-                <div class="mode-info">
-                    <div class="mode-title">CLASSIC</div>
-                    <div class="mode-desc">Набери макс. очков</div>
+        <div class="menu-content">
+            <div class="best-score-label">Лучший счет: <span id="best-menu">0</span></div>
+            <div class="mode-card" onclick="startGame()">
+                <div class="icon-box">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/>
+                    </svg>
                 </div>
-            </button>
+                <div class="mode-info">
+                    <h2>КЛАССИКА</h2>
+                    <p>Заполняй линии и бей рекорды</p>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Игра -->
     <div id="game-screen">
-        <div id="score">0</div>
-        <div id="board-container">
+        <div class="score-box">
+            <div id="score">0</div>
+            <div class="best-label">Рекорд: <span id="best-game">0</span></div>
+        </div>
+
+        <div id="board-wrap">
             <canvas id="gameCanvas"></canvas>
         </div>
+
+        <div id="pieces-area">
+            <div class="slot" id="slot0"></div>
+            <div class="slot" id="slot1"></div>
+            <div class="slot" id="slot2"></div>
+        </div>
+    </div>
+
+    <canvas id="drag-layer"></canvas>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.headerColor = '#020617';
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const dragCanvas = document.getElementById('drag-layer');
+    const dctx = dragCanvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    let score = 0;
+    let bestScore = localStorage.getItem('skyBlastBest') || 0;
+    const GRID = 8;
+    let cellSize = 0;
+    let board = Array(GRID).fill().map(() => Array(GRID).fill(null));
+    let pieces = [null, null, null];
+    
+    document.getElementById('best-menu').innerText = bestScore;
+    document.getElementById('best-game').innerText = bestScore;
+
+    const colors = ['#38bdf8', '#f472b6', '#a78bfa', '#fb923c', '#4ade80', '#facc15'];
+
+    const shapes = [
+        [[1, 1], [1, 1]], [[1, 1, 1, 1]], [[1, 1, 1]], 
+        [[1, 1, 0], [0, 1, 1]], [[1, 1], [1, 0]], [[1]],
+        [[1, 1, 1], [1, 0, 0]], [[0, 1, 0], [1, 1, 1]],
+        [[1, 1, 1], [0, 0, 1]], [[1, 1], [0, 1], [0, 1]]
+    ];
+
+    function startGame() {
+        document.getElementById('menu-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('menu-screen').style.display = 'none';
+            const gs = document.getElementById('game-screen');
+            gs.style.display = 'flex';
+            setTimeout(() => gs.style.opacity = '1', 50);
+            initGame();
+        }, 400);
+    }
+
+    function initGame() {
+        const size = Math.min(window.innerWidth - 60, 350);
+        cellSize = size / GRID;
+        canvas.width = size * dpr; canvas.height = size * dpr;
+        canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+        ctx.scale(dpr, dpr);
+        spawnPieces();
+        requestAnimationFrame(updateLoop);
+    }
+
+    function spawnPieces() {
+        for(let i=0; i<3; i++) {
+            pieces[i] = {
+                shape: shapes[Math.floor(Math.random()*shapes.length)],
+                color: colors[Math.floor(Math.random()*colors.length)],
+                used: false
+            };
+            drawSlot(i);
+        }
+    }
+
+    function drawSlot(i) {
+        const slot = document.getElementById(`slot${i}`);
+        slot.innerHTML = '';
+        if(pieces[i].used) return;
+        const sCvs = document.createElement('canvas');
+        const sDim = 85;
+        sCvs.width = sDim*dpr; sCvs.height = sDim*dpr;
+        sCvs.style.width = sDim+'px'; sCvs.style.height = sDim+'px';
+        const sCtx = sCvs.getContext('2d');
+        sCtx.scale(dpr, dpr);
+        sCtx.fillStyle = pieces[i].color;
+        const pSize = 18;
+        const ox = (sDim - pieces[i].shape[0].length*pSize)/2;
+        const oy = (sDim - pieces[i].shape.length*pSize)/2;
+        pieces[i].shape.forEach((row, y) => row.forEach((v, x) => {
+            if(v) drawRoundedRect(sCtx, ox+x*pSize, oy+y*pSize, pSize-2, pSize-2, 4);
+        }));
+        sCvs.ontouchstart = (e) => startDrag(e, i);
+        slot.appendChild(sCvs);
+    }
+
+    function drawRoundedRect(c, x, y, w, h, r) {
+        c.beginPath(); c.roundRect(x, y, w, h, r); c.fill();
+    }
+
+    // --- Улучшенное управление ---
+    let drag = { active: false, idx: null, x: 0, y: 0, gx: -1, gy: -1 };
+
+    function startDrag(e, i) {
+        drag = { active: true, idx: i, x: e.touches[0].clientX, y: e.touches[0].clientY, gx: -1, gy: -1 };
+        tg.HapticFeedback.impactOccurred('light');
+    }
+
+    window.ontouchmove = (e) => {
+        if(!drag.active) return;
+        drag.x = e.touches[0].clientX;
+        drag.y = e.touches[0].clientY;
+        
+        const rect = canvas.getBoundingClientRect();
+        const p = pieces[drag.idx];
+        
+        // Фикс позиционирования: расчет от верхнего левого края фигуры, поднятой над пальцем
+        // Теперь расчет gx/gy стал точнее за счет добавления небольшого смещения вправо (+0.5)
+        drag.gx = Math.round((drag.x - rect.left) / cellSize - p.shape[0].length / 2 + 0.3);
+        drag.gy = Math.round((drag.y - rect.top - cellSize * 2.2) / cellSize);
+    };
+
+    window.ontouchend = () => {
+        if(!drag.active) return;
+        if(canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
+            placePiece(drag.gx, drag.gy, drag.idx);
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+        drag.active = false;
+    };
+
+    function canPlace(gx, gy, shape) {
+        if(gx < 0 || gy < 0 || gx + shape[0].length > GRID || gy + shape.length > GRID) return false;
+        for(let y=0; y<shape.length; y++) {
+            for(let x=0; x<shape[y].length; x++) {
+                if(shape[y][x] && board[gy+y][gx+x]) return false;
+            }
+        }
+        return true;
+    }
+
+    function placePiece(gx, gy, idx) {
+        const p = pieces[idx];
+        p.shape.forEach((row, y) => row.forEach((v, x) => {
+            if(v) board[gy+y][gx+x] = p.color;
+        }));
+        p.used = true;
+        document.getElementById(`slot${idx}`).innerHTML = '';
+        checkLines();
+        if(pieces.every(p => p.used)) spawnPieces();
+    }
+
+    function checkLines() {
+        let rFull = [], cFull = [];
+        for(let i=0; i<GRID; i++) {
+            if(board[i].every(v => v && !v.anim)) rFull.push(i);
+            if(board.map(r => r[i]).every(v => v && !v.anim)) cFull.push(i);
+        }
+        
+        rFull.forEach(y => {
+            for(let x=0; x<GRID; x++) animateCellOut(x, y);
+            score += 80;
+        });
+        cFull.forEach(x => {
+            for(let y=0; y<GRID; y++) animateCellOut(x, y);
+            score += 80;
+        });
+
+        if(score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('skyBlastBest', bestScore);
+            document.getElementById('best-game').innerText = bestScore;
+        }
+        document.getElementById('score').innerText = score;
+    }
+
+    function animateCellOut(x, y) {
+        if(!board[y][x]) return;
+        const color = board[y][x];
+        board[y][x] = { color, anim: 1 };
+    }
+
+    function updateLoop() {
+        ctx.clearRect(0,0,GRID*cellSize, GRID*cellSize);
+        
+        // Сетка
+        for(let y=0; y<GRID; y++) {
+            for(let x=0; x<GRID; x++) {
+                const cell = board[y][x];
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                let s = 1;
+                if(cell) {
+                    ctx.fillStyle = cell.color || cell;
+                    if(cell.anim) {
+                        cell.anim -= 0.08;
+                        s = cell.anim;
+                        if(cell.anim <= 0) board[y][x] = null;
+                    }
+                }
+                const offset = (cellSize * (1-s))/2;
+                drawRoundedRect(ctx, x*cellSize+2+offset, y*cellSize+2+offset, (cellSize-4)*s, (cellSize-4)*s, 6*s);
+            }
+        }
+
+        // Подсказка (Ghost Preview)
+        if(drag.active && canPlace(drag.gx, drag.gy, pieces[drag.idx].shape)) {
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            pieces[drag.idx].shape.forEach((row, y) => row.forEach((v, x) => {
+                if(v) drawRoundedRect(ctx, (drag.gx+x)*cellSize+2, (drag.gy+y)*cellSize+2, cellSize-4, cellSize-4, 6);
+            }));
+        }
+
+        // Слой перетаскивания
+        if(drag.active) {
+            dragCanvas.style.display = 'block';
+            const p = pieces[drag.idx];
+            const dw = p.shape[0].length * cellSize;
+            const dh = p.shape.length * cellSize;
+            dragCanvas.width = dw*dpr; dragCanvas.height = dh*dpr;
+            dragCanvas.style.width = dw+'px'; dragCanvas.style.height = dh+'px';
+            
+            // Фигура смещена выше и чуть правее для удобства обзора
+            dragCanvas.style.left = (drag.x - dw/2 + 20)+'px';
+            dragCanvas.style.top = (drag.y - dh - 60)+'px';
+            
+            dctx.setTransform(1,0,0,1,0,0);
+            dctx.scale(dpr, dpr);
+            dctx.fillStyle = p.color;
+            p.shape.forEach((row, y) => row.forEach((v, x) => {
+                if(v) drawRoundedRect(dctx, x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8);
+            }));
+        } else {
+            dragCanvas.style.display = 'none';
+        }
+
+        requestAnimationFrame(updateLoop);
+    }
+
+</script>
+</body>
+</html>о        </div>
         <div id="pieces-area">
             <div class="slot" id="slot0"></div>
             <div class="slot" id="slot1"></div>

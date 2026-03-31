@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Block Blast TMA 0.1</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --grid-color: #1e1e1e;
+            --cell-empty: #2a2a2a;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: none;
+            overflow: hidden;
+        }
+        #ui {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #game-container {
+            position: relative;
+            margin-top: 20px;
+        }
+        canvas {
+            background: var(--grid-color);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #pieces-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 30px;
+            height: 120px;
+        }
+        .piece-canvas {
+            cursor: grab;
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">Score: <span id="score">0</span></div>
+    
+    <div id="game-container">
+        <canvas id="gridCanvas"></canvas>
+    </div>
+
+    <div id="pieces-container">
+        <canvas id="p1" class="piece-canvas"></canvas>
+        <canvas id="p2" class="piece-canvas"></canvas>
+        <canvas id="p3" class="piece-canvas"></canvas>
+    </div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const GRID_SIZE = 8;
+    const CELL_MARGIN = 4;
+    let score = 0;
+    
+    const canvas = document.getElementById('gridCanvas');
+    const ctx = canvas.getContext('2d');
+    const pCanvases = [document.getElementById('p1'), document.getElementById('p2'), document.getElementById('p3')];
+    
+    let cellSize = 0;
+    let grid = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null));
+    let pieces = [null, null, null];
+    
+    // Цвета блоков
+    const colors = ['#FF3B30', '#FF9500', '#FFCC00', '#4CD964', '#5AC8FA', '#007AFF', '#5856D6'];
+
+    // Шаблоны фигур (0.1 версия)
+    const shapes = [
+        [[1, 1], [1, 1]], // Квадрат
+        [[1, 1, 1, 1]],    // Линия
+        [[1, 1, 1]],       // Линия 3
+        [[1, 1], [1, 0]], // L-образная маленькая
+        [[1, 0], [1, 0], [1, 1]], // L
+        [[1]] // Точка
+    ];
+
+    function init() {
+        const width = Math.min(window.innerWidth - 40, 400);
+        canvas.width = width;
+        canvas.height = width;
+        cellSize = width / GRID_SIZE;
+        
+        spawnPieces();
+        draw();
+    }
+
+    function spawnPieces() {
+        pieces = pieces.map(() => {
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            return { shape, color, used: false };
+        });
+        renderPieces();
+    }
+
+    function renderPieces() {
+        pCanvases.forEach((pCanvas, i) => {
+            const pCtx = pCanvas.getContext('2d');
+            pCanvas.width = 100;
+            pCanvas.height = 100;
+            const piece = pieces[i];
+            
+            if (!piece || piece.used) {
+                pCtx.clearRect(0, 0, 100, 100);
+                return;
+            }
+
+            const pCellSize = 20;
+            pCtx.fillStyle = piece.color;
+            piece.shape.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    if (cell) {
+                        drawRoundedRect(pCtx, x * pCellSize + 10, y * pCellSize + 10, pCellSize - 2, pCellSize - 2, 4);
+                    }
+                });
+            });
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                ctx.fillStyle = grid[y][x] || '#2a2a2a';
+                drawRoundedRect(ctx, x * cellSize + CELL_MARGIN, y * cellSize + CELL_MARGIN, 
+                               cellSize - CELL_MARGIN*2, cellSize - CELL_MARGIN*2, 5);
+            }
+        }
+    }
+
+    function drawRoundedRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, r);
+        ctx.fill();
+    }
+
+    // Логика перетаскивания (упрощенная для 0.1)
+    let dragItem = null;
+    let offset = { x: 0, y: 0 };
+
+    pCanvases.forEach((pCanvas, index) => {
+        pCanvas.addEventListener('touchstart', (e) => {
+            if (pieces[index].used) return;
+            dragItem = index;
+            tg.HapticFeedback.impactOccurred('light');
+        });
+    });
+
+    window.addEventListener('touchmove', (e) => {
+        if (dragItem === null) return;
+        // В версии 0.1 мы просто фиксируем палец. 
+        // Для полноценного Drag-n-Drop нужно рисовать "призрак" фигуры под пальцем.
+    });
+
+    window.addEventListener('touchend', (e) => {
+        if (dragItem === null) return;
+        
+        const touch = e.changedTouches[0];
+        const rect = canvas.getBoundingClientRect();
+        
+        const x = Math.floor((touch.clientX - rect.left) / cellSize);
+        const y = Math.floor((touch.clientY - rect.top) / cellSize);
+
+        if (tryPlace(x, y, pieces[dragItem])) {
+            pieces[dragItem].used = true;
+            checkLines();
+            if (pieces.every(p => p.used)) spawnPieces();
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        dragItem = null;
+        draw();
+        renderPieces();
+    });
+
+    function tryPlace(gridX, gridY, piece) {
+        if (gridX < 0 || gridY < 0) return false;
+        
+        // Проверка влезет ли
+        for (let y = 0; y < piece.shape.length; y++) {
+            for (let x = 0; x < piece.shape[y].length; x++) {
+                if (piece.shape[y][x]) {
+                    if (gridY + y >= GRID_SIZE || gridX + x >= GRID_SIZE || grid[gridY + y][gridX + x]) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Ставим
+        for (let y = 0; y < piece.shape.length; y++) {
+            for (let x = 0; x < piece.shape[y].length; x++) {
+                if (piece.shape[y][x]) {
+                    grid[gridY + y][gridX + x] = piece.color;
+                }
+            }
+        }
+        return true;
+    }
+
+    function checkLines() {
+        let rowsToDelete = [];
+        let colsToDelete = [];
+
+        // Проверка строк
+        for (let y = 0; y < GRID_SIZE; y++) {
+            if (grid[y].every(cell => cell !== null)) rowsToDelete.push(y);
+        }
+
+        // Проверка столбцов
+        for (let x = 0; x < GRID_SIZE; x++) {
+            let colFull = true;
+            for (let y = 0; y < GRID_SIZE; y++) {
+                if (grid[y][x] === null) colFull = false;
+            }
+            if (colFull) colsToDelete.push(x);
+        }
+
+        // Удаление
+        rowsToDelete.forEach(y => {
+            for (let x = 0; x < GRID_SIZE; x++) grid[y][x] = null;
+            score += 10;
+        });
+        colsToDelete.forEach(x => {
+            for (let y = 0; y < GRID_SIZE; y++) grid[y][x] = null;
+            score += 10;
+        });
+
+        document.getElementById('score').innerText = score;
+    }
+
+    init();
+</script>
+</body>
+</html>

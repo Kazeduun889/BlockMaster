@@ -3,36 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky Blast Ultimate</title>
+    <title>Sky Blast Final</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #020617; --accent: #38bdf8; --text: #f8fafc; }
         body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; touch-action: none; }
         
-        /* Меню */
+        /* МЕНЮ */
         #menu-screen { position: fixed; inset: 0; z-index: 100; background: radial-gradient(at 0% 0%, #082f49 0px, transparent 50%), #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .profile { position: absolute; top: 30px; left: 20px; display: flex; align-items: center; gap: 10px; background: rgba(30,41,59,0.7); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; background: linear-gradient(45deg, #0ea5e9, #6366f1); border: 2px solid var(--accent); }
-        .bar-bg { width: 70px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 4px; overflow: hidden; }
+        
+        .profile { position: absolute; top: 30px; left: 20px; display: flex; align-items: center; gap: 12px; background: rgba(30,41,59,0.8); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: url('https://ui-avatars.com/api/?name=User&background=0ea5e9&color=fff') no-repeat center/cover; border: 2px solid var(--accent); }
+        .bar-bg { width: 80px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 4px; overflow: hidden; }
         .bar-fill { width: 0%; height: 100%; background: var(--accent); transition: 0.3s; }
         
-        /* Лидеры */
+        /* КУБОК */
         .lb-btn { position: absolute; top: 35px; right: 25px; cursor: pointer; }
-        #lb-modal { position: fixed; inset: 0; background: rgba(2,6,23,0.95); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .lb-box { background: #0f172a; width: 85%; max-width: 300px; border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); }
-        .lb-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
 
-        /* Игра */
+        /* ИГРА */
         #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; }
-        #score { font-size: 80px; font-weight: 900; margin-top: 40px; letter-spacing: -3px; line-height: 1; }
+        #score { font-size: 80px; font-weight: 900; margin-top: 50px; letter-spacing: -3px; line-height: 1; }
         .best-label { font-size: 12px; opacity: 0.5; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-bottom: 20px; }
-        #board-box { padding: 6px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); }
-        #pieces-box { display: flex; gap: 10px; margin-top: 30px; }
-        .slot { width: 95px; height: 95px; background: rgba(255,255,255,0.02); border-radius: 20px; display: flex; align-items: center; justify-content: center; }
-        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; display: none; }
-        .game-over { position: fixed; inset: 0; background: rgba(2,6,23,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
         
-        .mode-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 30px; display: flex; align-items: center; gap: 15px; width: 260px; cursor: pointer; }
+        #board-box { padding: 6px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); }
+        
+        #pieces-box { display: flex; gap: 10px; margin-top: 40px; min-height: 100px; }
+        .slot { width: 95px; height: 95px; background: rgba(255,255,255,0.02); border-radius: 22px; display: flex; align-items: center; justify-content: center; }
+        
+        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; display: none; }
+        
+        .mode-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 35px; display: flex; align-items: center; gap: 20px; width: 280px; cursor: pointer; }
+        .game-over { position: fixed; inset: 0; background: rgba(2,6,23,0.98); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -41,30 +42,22 @@
         <div class="profile">
             <div class="avatar"></div>
             <div>
-                <div id="lvl-txt" style="font-size:10px; font-weight:900; color:var(--accent)">LVL 1</div>
+                <div id="lvl-txt" style="font-size:10px; font-weight:900; color:var(--accent)">УРОВЕНЬ 1</div>
                 <div class="bar-bg"><div id="xp-bar" class="bar-fill"></div></div>
             </div>
         </div>
-        
-        <div class="lb-btn" onclick="toggleLb(true)">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24"><path d="M20 7h-2V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v2a5 5 0 0 0 5 5h.2c.6 1.8 2.3 3.1 4.3 3.4V21H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3.5v-1.6c2-.3 3.7-1.6 4.3-3.4H17a5 5 0 0 0 5-5V9a2 2 0 0 0-2-2z"/></svg>
+
+        <div class="lb-btn" onclick="alert('Топ 10 скоро появится!')">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="#fbbf24"><path d="M20 7h-2V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v2a5 5 0 0 0 5 5h.2c.6 1.8 2.3 3.1 4.3 3.4V21H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3.5v-1.6c2-.3 3.7-1.6 4.3-3.4H17a5 5 0 0 0 5-5V9a2 2 0 0 0-2-2z"/></svg>
         </div>
 
-        <div class="best-label" style="font-size:15px; opacity:1; margin-top:40px"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z"/></svg> РЕКОРД: <span id="best-m">0</span></div>
+        <div class="best-label" style="font-size:16px; opacity:1; margin-top:50px"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z"/></svg> РЕКОРД: <span id="best-m">0</span></div>
         
         <div class="mode-btn" onclick="startGame()">
-            <div style="width:45px; height:45px; background:var(--accent); border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(56,189,248,0.3)">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <div style="width:50px; height:50px; background:var(--accent); border-radius:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(56,189,248,0.4)">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
             </div>
-            <div><h2 style="margin:0; font-size:18px">КЛАССИКА</h2><p style="margin:0; font-size:11px; opacity:0.5">Бесконечный режим</p></div>
-        </div>
-    </div>
-
-    <div id="lb-modal">
-        <div class="lb-box">
-            <h3 style="margin-top:0; text-align:center">ТОП 10 МИРА</h3>
-            <div id="lb-list"></div>
-            <button onclick="toggleLb(false)" style="width:100%; margin-top:20px; padding:12px; border-radius:15px; border:none; background:var(--accent); color:white; font-weight:bold">ЗАКРЫТЬ</button>
+            <div><h2 style="margin:0; font-size:22px">КЛАССИКА</h2><p style="margin:0; font-size:12px; opacity:0.5">Бесконечный режим</p></div>
         </div>
     </div>
 
@@ -76,8 +69,9 @@
     </div>
 
     <div class="game-over" id="gameOver">
-        <h1 style="font-size:40px">КОНЕЦ</h1>
-        <button onclick="location.reload()" style="background:var(--accent); border:none; padding:15px 40px; border-radius:20px; color:white; font-weight:800">ЗАНОВО</button>
+        <h1 style="font-size:48px; margin:0">КОНЕЦ</h1>
+        <p style="opacity:0.6; margin-bottom:30px">Ходов больше нет</p>
+        <button onclick="location.reload()" style="background:var(--accent); border:none; padding:18px 50px; border-radius:22px; color:white; font-weight:800; font-size:18px">ЗАНОВО</button>
     </div>
 
     <canvas id="drag-layer"></canvas>
@@ -96,24 +90,15 @@
     let anims = [];
 
     const colors = ['#0ea5e9', '#f43f5e', '#a855f7', '#f59e0b', '#10b981', '#6366f1'];
-    const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1]], [[1,1,0],[0,1,1]], [[1,1],[1,0]], [[1]], [[1,1,1],[1,0,0]], [[0,1,0],[1,1,1]], [[1,1,1],[0,1,0]]];
+    const shapes = [[[1]], [[1,1],[1,1]], [[1,1,1,1]], [[1,1,1]], [[1,1,0],[0,1,1]], [[1,1],[1,0]], [[1,1,1],[1,0,0]], [[0,1,0],[1,1,1]]];
 
-    function toggleLb(s) {
-        document.getElementById('lb-modal').style.display = s ? 'flex' : 'none';
-        if(s) {
-            const list = document.getElementById('lb-list'); list.innerHTML = '';
-            const names = ['SkyWalker','Mamba','TG_King','Ace','Zero','BlockHacker','Max','Pro','Winner','Ты'];
-            names.forEach((n, i) => {
-                list.innerHTML += `<div class="lb-item"><span>${i+1}. ${n}</span><span>${10000 - i*950}</span></div>`;
-            });
-        }
-    }
-
+    function getNeeded() { if(lvl===1) return 1000; if(lvl===2) return 2500; if(lvl===3) return 5000; return 10000; }
+    
     function updStats() {
-        document.getElementById('lvl-txt').innerText = `LVL ${lvl}`;
-        const needed = [0, 1000, 2500, 5000, 10000][lvl] || 20000;
-        document.getElementById('xp-bar').style.width = (xp/needed*100)+'%';
-        document.getElementById('best-m').innerText = best; document.getElementById('best-g').innerText = best;
+        document.getElementById('lvl-txt').innerText = `УРОВЕНЬ ${lvl}`;
+        document.getElementById('xp-bar').style.width = (xp/getNeeded()*100)+'%';
+        document.getElementById('best-m').innerText = best; 
+        document.getElementById('best-g').innerText = best;
         document.getElementById('score').innerText = score;
     }
 
@@ -124,7 +109,10 @@
         cellSize = Math.min(window.innerWidth - 60, 340) / GRID;
         canvas.width = canvas.height = (cellSize * GRID) * dpr;
         canvas.style.width = canvas.style.height = (cellSize * GRID) + 'px';
-        ctx.scale(dpr, dpr); spawn(); loop();
+        ctx.scale(dpr, dpr); 
+        spawn(); 
+        updStats();
+        requestAnimationFrame(loop);
     }
 
     function spawn() {
@@ -145,22 +133,19 @@
         cvs.ontouchstart = (e) => { 
             drag.active = true; drag.idx = i; 
             const t = e.touches[0]; drag.x = t.clientX; drag.y = t.clientY;
-            updateDragCoords();
             tg.HapticFeedback.impactOccurred('light'); 
         };
         slot.appendChild(cvs);
     }
 
-    function updateDragCoords() {
-        const r = canvas.getBoundingClientRect(); const p = pieces[drag.idx];
-        drag.gx = Math.round((drag.x - r.left - (p.shape[0].length * cellSize)/2) / cellSize);
-        drag.gy = Math.round((drag.y - r.top - (p.shape.length * cellSize) - cellSize*0.6) / cellSize);
-    }
-
     window.ontouchmove = (e) => {
         if(!drag.active) return;
         drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
-        updateDragCoords();
+        const r = canvas.getBoundingClientRect();
+        const p = pieces[drag.idx];
+        // ФОРМУЛА ЦЕНТРИРОВАНИЯ: Смещение по X и Y для идеального попадания
+        drag.gx = Math.floor((drag.x - r.left) / cellSize - (p.shape[0].length / 2) + 0.5);
+        drag.gy = Math.floor((drag.y - r.top - cellSize * 1.8) / cellSize);
     };
 
     window.ontouchend = () => {
@@ -188,12 +173,14 @@
         let rF = [], cF = [];
         for(let i=0; i<GRID; i++) {
             if(board[i].every(v=>v!==null)) rF.push(i);
-            let c = true; for(let j=0; j<GRID; j++) if(!board[j][i]) c = false; if(c) cF.push(i);
+            let colFull = true;
+            for(let j=0; j<GRID; j++) if(board[j][i] === null) colFull = false;
+            if(colFull) cF.push(i);
         }
-        rF.forEach(y => { for(let x=0; x<GRID; x++){ anims.push({x,y,c:board[y][x]}); board[y][x]=null; } score+=3; xp+=1; });
-        cF.forEach(x => { for(let y=0; y<GRID; y++){ if(board[y][x]){ anims.push({x,y,c:board[y][x]}); board[y][x]=null; } } score+=3; xp+=1; });
-        const needed = [0, 1000, 2500, 5000, 10000][lvl] || 20000;
-        if(xp >= needed){ xp=0; lvl++; }
+        rF.forEach(y => { for(let x=0; x<GRID; x++){ anims.push({x,y,c:board[y][x],s:1}); board[y][x]=null; } score+=3; xp+=1; });
+        cF.forEach(x => { for(let y=0; y<GRID; y++){ if(board[y][x]){ anims.push({x,y,c:board[y][x],s:1}); board[y][x]=null; } } score+=3; xp+=1; });
+        
+        if(xp >= getNeeded()){ xp-=getNeeded(); lvl++; }
         if(score > best){ best=score; localStorage.setItem('sb_best', best); }
         localStorage.setItem('sb_xp', xp); localStorage.setItem('sb_lvl', lvl);
     }
@@ -208,26 +195,39 @@
     }
 
     function loop() {
+        ctx.globalAlpha = 1; // ФИКС НЕВИДИМОСТИ
         ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        // СЕТКА
         for(let y=0; y<GRID; y++) for(let x=0; x<GRID; x++){
             ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.beginPath(); ctx.roundRect(x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill();
-            if(board[y][x]){ ctx.fillStyle = board[y][x]; ctx.beginPath(); ctx.roundRect(x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill(); }
+            if(board[y][x]){ 
+                ctx.fillStyle = board[y][x]; 
+                ctx.beginPath(); ctx.roundRect(x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill(); 
+            }
         }
+        
+        // АНИМАЦИИ
         anims = anims.filter(a => {
-            if(!a.s) a.s = 1; a.s -= 0.07; ctx.fillStyle = a.c; const sz = (cellSize-4)*a.s; const o = (cellSize-sz)/2;
+            a.s -= 0.07; ctx.fillStyle = a.c; const sz = (cellSize-4)*a.s; const o = (cellSize-sz)/2;
             ctx.beginPath(); ctx.roundRect(a.x*cellSize+o, a.y*cellSize+o, sz, sz, 6*a.s); ctx.fill(); return a.s > 0;
         });
+
+        // ПРИЗРАК
         if(drag.active && canP(drag.gx, drag.gy, pieces[drag.idx].shape)) {
             ctx.fillStyle = 'rgba(255,255,255,0.15)';
             pieces[drag.idx].shape.forEach((r,y)=>r.forEach((v,x)=>{ if(v){ ctx.beginPath(); ctx.roundRect((drag.gx+x)*cellSize+2, (drag.gy+y)*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill(); }}));
         }
+
+        // ПЕРЕТАСКИВАНИЕ
         if(drag.active) {
             dlayer.style.display = 'block'; const p = pieces[drag.idx], dw = p.shape[0].length*cellSize, dh = p.shape.length*cellSize;
-            dlayer.width = dw*dpr; dlayer.height = dh*dpr; dlayer.style.width = dw+'px';
-            dlayer.style.left = (drag.x - dw/2)+'px'; dlayer.style.top = (drag.y - dh - cellSize*1.3)+'px';
+            dlayer.width = dw*dpr; dlayer.height = dh*dpr; dlayer.style.width = dw+'px'; dlayer.style.height = dh+'px';
+            dlayer.style.left = (drag.x - dw/2)+'px'; dlayer.style.top = (drag.y - dh - cellSize*1.5)+'px';
             dctx.setTransform(1,0,0,1,0,0); dctx.scale(dpr, dpr); dctx.fillStyle = p.color;
             p.shape.forEach((r,y)=>r.forEach((v,x)=>{ if(v){ dctx.beginPath(); dctx.roundRect(x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8); dctx.fill(); }}));
         } else dlayer.style.display = 'none';
+
         requestAnimationFrame(loop);
     }
     updStats();

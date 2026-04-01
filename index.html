@@ -3,83 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky Blast Pro</title>
+    <title>Sky Blast Ultimate</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root { --bg: #020617; --accent: #38bdf8; --text: #f8fafc; }
         body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; height: 100vh; overflow: hidden; touch-action: none; }
         
         /* Меню */
-        #menu-screen { position: fixed; inset: 0; z-index: 100; background: radial-gradient(at 0% 0%, #082f49 0px, transparent 50%), #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
-        .profile { position: absolute; top: 30px; left: 20px; display: flex; align-items: center; gap: 12px; background: rgba(15, 23, 42, 0.7); padding: 10px 18px; border-radius: 26px; border: 1px solid rgba(255,255,255,0.1); }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, #0ea5e9, #6366f1); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; }
-        .bar-bg { width: 80px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 4px; overflow: hidden; }
+        #menu-screen { position: fixed; inset: 0; z-index: 100; background: radial-gradient(at 0% 0%, #082f49 0px, transparent 50%), #020617; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .profile { position: absolute; top: 30px; left: 20px; display: flex; align-items: center; gap: 10px; background: rgba(30,41,59,0.7); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; background: linear-gradient(45deg, #0ea5e9, #6366f1); border: 2px solid var(--accent); }
+        .bar-bg { width: 70px; height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 4px; overflow: hidden; }
         .bar-fill { width: 0%; height: 100%; background: var(--accent); transition: 0.3s; }
         
-        /* Кубок Лидеров */
-        .lb-icon { position: absolute; top: 35px; right: 25px; cursor: pointer; filter: drop-shadow(0 0 10px rgba(56,189,248,0.3)); transition: 0.2s; }
-        .lb-icon:active { transform: scale(0.9); }
+        /* Лидеры */
+        .lb-btn { position: absolute; top: 35px; right: 25px; cursor: pointer; }
+        #lb-modal { position: fixed; inset: 0; background: rgba(2,6,23,0.95); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .lb-box { background: #0f172a; width: 85%; max-width: 300px; border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); }
+        .lb-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
 
-        /* Модальное окно */
-        #lb-modal { position: fixed; inset: 0; background: rgba(2,6,23,0.9); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
-        .lb-content { background: #0f172a; width: 100%; max-width: 300px; border-radius: 30px; padding: 25px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .lb-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-        .lb-row span:first-child { color: var(--accent); font-weight: 800; }
-        .close-btn { width: 100%; background: var(--accent); border: none; padding: 12px; border-radius: 15px; color: white; font-weight: 800; margin-top: 20px; }
-
-        .mode-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border-radius: 35px; padding: 25px; width: 260px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 20px; cursor: pointer; }
-        
         /* Игра */
-        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; opacity: 0; transition: 0.5s; }
-        #score { font-size: 80px; font-weight: 900; margin-top: 50px; letter-spacing: -3px; }
-        .best-label { font-size: 12px; opacity: 0.5; font-weight: 700; display: flex; align-items: center; gap: 5px; margin-bottom: 20px; }
-        #board-box { padding: 8px; background: rgba(255,255,255,0.02); border-radius: 26px; border: 1px solid rgba(255,255,255,0.05); }
-        #pieces-box { display: flex; gap: 12px; margin-top: 40px; height: 100px; }
-        .slot { width: 90px; height: 90px; background: rgba(255,255,255,0.03); border-radius: 22px; display: flex; align-items: center; justify-content: center; }
-        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6)); display: none; }
+        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; height: 100%; }
+        #score { font-size: 80px; font-weight: 900; margin-top: 40px; letter-spacing: -3px; line-height: 1; }
+        .best-label { font-size: 12px; opacity: 0.5; font-weight: 800; display: flex; align-items: center; gap: 5px; margin-bottom: 20px; }
+        #board-box { padding: 6px; background: rgba(255,255,255,0.03); border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); }
+        #pieces-box { display: flex; gap: 10px; margin-top: 30px; }
+        .slot { width: 95px; height: 95px; background: rgba(255,255,255,0.02); border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+        #drag-layer { position: fixed; pointer-events: none; z-index: 1000; display: none; }
         .game-over { position: fixed; inset: 0; background: rgba(2,6,23,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .mode-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 30px; display: flex; align-items: center; gap: 15px; width: 260px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="menu-screen">
         <div class="profile">
-            <div class="avatar"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
-            <div style="display:flex; flex-direction:column">
-                <span id="lvl-txt" style="font-size:10px; font-weight:900; color:var(--accent)">УРОВЕНЬ 1</span>
+            <div class="avatar"></div>
+            <div>
+                <div id="lvl-txt" style="font-size:10px; font-weight:900; color:var(--accent)">LVL 1</div>
                 <div class="bar-bg"><div id="xp-bar" class="bar-fill"></div></div>
             </div>
         </div>
         
-        <div class="lb-icon" onclick="toggleLb(true)">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24"><path d="M20 7h-2V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v2a5 5 0 0 0 5 5h.2c.6 1.8 2.3 3.1 4.3 3.4V21H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3.5v-1.6c2-.3 3.7-1.6 4.3-3.4H17a5 5 0 0 0 5-5V9a2 2 0 0 0-2-2zM7 13a3 3 0 0 1-3-3V9h3v4zm13-3a3 3 0 0 1-3 3V9h3v1z"/></svg>
+        <div class="lb-btn" onclick="toggleLb(true)">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24"><path d="M20 7h-2V5a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v2a5 5 0 0 0 5 5h.2c.6 1.8 2.3 3.1 4.3 3.4V21H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3.5v-1.6c2-.3 3.7-1.6 4.3-3.4H17a5 5 0 0 0 5-5V9a2 2 0 0 0-2-2z"/></svg>
         </div>
 
-        <div class="best-label" style="font-size:16px; opacity:1; margin-top: 50px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z"/></svg>РЕКОРД: <span id="best-m">0</span></div>
-        <div class="mode-card" onclick="startGame()">
-            <div style="width:50px; height:50px; background:var(--accent); border-radius:15px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(56,189,248,0.4)">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+        <div class="best-label" style="font-size:15px; opacity:1; margin-top:40px"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5Z"/></svg> РЕКОРД: <span id="best-m">0</span></div>
+        
+        <div class="mode-btn" onclick="startGame()">
+            <div style="width:45px; height:45px; background:var(--accent); border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 15px rgba(56,189,248,0.3)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
             </div>
-            <div><h2 style="margin:0; font-size:20px">КЛАССИКА</h2><p style="margin:2px 0 0; opacity:0.5; font-size:12px">Медленный фарм</p></div>
+            <div><h2 style="margin:0; font-size:18px">КЛАССИКА</h2><p style="margin:0; font-size:11px; opacity:0.5">Бесконечный режим</p></div>
         </div>
     </div>
 
     <div id="lb-modal">
-        <div class="lb-content">
-            <h2 style="margin: 0 0 20px 0; text-align: center; font-size: 18px;">ТОП 10 МИРА</h2>
-            <div id="lb-list">
-                <div class="lb-row"><span>1. AlexSky</span><span>14,502</span></div>
-                <div class="lb-row"><span>2. BlockMaster</span><span>12,100</span></div>
-                <div class="lb-row"><span>3. TG_Player</span><span>9,450</span></div>
-                <div class="lb-row"><span>4. Winner99</span><span>8,200</span></div>
-                <div class="lb-row"><span>5. ZenBlast</span><span>7,100</span></div>
-                <div class="lb-row"><span>6. Игрок1</span><span>5,400</span></div>
-                <div class="lb-row"><span>7. Mamba</span><span>4,200</span></div>
-                <div class="lb-row"><span>8. Neo</span><span>3,900</span></div>
-                <div class="lb-row"><span>9. Ghost</span><span>2,100</span></div>
-                <div class="lb-row"><span>10. Ты</span><span id="lb-my-score">0</span></div>
-            </div>
-            <button class="close-btn" onclick="toggleLb(false)">ЗАКРЫТЬ</button>
+        <div class="lb-box">
+            <h3 style="margin-top:0; text-align:center">ТОП 10 МИРА</h3>
+            <div id="lb-list"></div>
+            <button onclick="toggleLb(false)" style="width:100%; margin-top:20px; padding:12px; border-radius:15px; border:none; background:var(--accent); color:white; font-weight:bold">ЗАКРЫТЬ</button>
         </div>
     </div>
 
@@ -108,32 +93,38 @@
     const GRID = 8; let cellSize = 0;
     let board = Array(GRID).fill().map(() => Array(GRID).fill(null));
     let pieces = [null, null, null], drag = { active: false, idx: null, x:0, y:0, gx:-1, gy:-1 };
-    let floating = [], anims = [];
+    let anims = [];
 
     const colors = ['#0ea5e9', '#f43f5e', '#a855f7', '#f59e0b', '#10b981', '#6366f1'];
     const shapes = [[[1,1],[1,1]], [[1,1,1,1]], [[1,1,1]], [[1,1,0],[0,1,1]], [[1,1],[1,0]], [[1]], [[1,1,1],[1,0,0]], [[0,1,0],[1,1,1]], [[1,1,1],[0,1,0]]];
 
-    function toggleLb(show) { document.getElementById('lb-modal').style.display = show ? 'flex' : 'none'; if(show) document.getElementById('lb-my-score').innerText = score; }
-    function getNeeded() { return lvl === 1 ? 1000 : lvl === 2 ? 2500 : lvl === 3 ? 5000 : 10000; }
-    
+    function toggleLb(s) {
+        document.getElementById('lb-modal').style.display = s ? 'flex' : 'none';
+        if(s) {
+            const list = document.getElementById('lb-list'); list.innerHTML = '';
+            const names = ['SkyWalker','Mamba','TG_King','Ace','Zero','BlockHacker','Max','Pro','Winner','Ты'];
+            names.forEach((n, i) => {
+                list.innerHTML += `<div class="lb-item"><span>${i+1}. ${n}</span><span>${10000 - i*950}</span></div>`;
+            });
+        }
+    }
+
     function updStats() {
-        document.getElementById('lvl-txt').innerText = `УРОВЕНЬ ${lvl}`;
-        document.getElementById('xp-bar').style.width = (xp/getNeeded()*100)+'%';
+        document.getElementById('lvl-txt').innerText = `LVL ${lvl}`;
+        const needed = [0, 1000, 2500, 5000, 10000][lvl] || 20000;
+        document.getElementById('xp-bar').style.width = (xp/needed*100)+'%';
         document.getElementById('best-m').innerText = best; document.getElementById('best-g').innerText = best;
         document.getElementById('score').innerText = score;
     }
 
     function startGame() {
-        document.getElementById('menu-screen').style.opacity = '0';
-        setTimeout(() => {
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            document.getElementById('game-screen').style.opacity = '1';
-            cellSize = Math.min(window.innerWidth - 60, 340) / GRID;
-            canvas.width = canvas.height = (cellSize * GRID) * dpr;
-            canvas.style.width = canvas.style.height = (cellSize * GRID) + 'px';
-            ctx.scale(dpr, dpr); spawn(); updStats(); loop();
-        }, 500);
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('game-screen').style.opacity = '1';
+        cellSize = Math.min(window.innerWidth - 60, 340) / GRID;
+        canvas.width = canvas.height = (cellSize * GRID) * dpr;
+        canvas.style.width = canvas.style.height = (cellSize * GRID) + 'px';
+        ctx.scale(dpr, dpr); spawn(); loop();
     }
 
     function spawn() {
@@ -147,26 +138,29 @@
     function drawSlot(i) {
         const slot = document.getElementById(`s${i}`); slot.innerHTML = '';
         if(pieces[i].used) return;
-        const cvs = document.createElement('canvas'); cvs.width = cvs.height = 80*dpr; cvs.style.width = cvs.style.height = '80px';
+        const cvs = document.createElement('canvas'); cvs.width = cvs.height = 85*dpr; cvs.style.width = '85px';
         const sctx = cvs.getContext('2d'); sctx.scale(dpr, dpr); sctx.fillStyle = pieces[i].color;
-        const pS = 16, ox = (80 - pieces[i].shape[0].length*pS)/2, oy = (80 - pieces[i].shape.length*pS)/2;
+        const pS = 18, ox = (85 - pieces[i].shape[0].length*pS)/2, oy = (85 - pieces[i].shape.length*pS)/2;
         pieces[i].shape.forEach((r,y)=>r.forEach((v,x)=>{ if(v) { sctx.beginPath(); sctx.roundRect(ox+x*pS, oy+y*pS, pS-2, pS-2, 4); sctx.fill(); }}));
-        
         cvs.ontouchstart = (e) => { 
             drag.active = true; drag.idx = i; 
-            drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY; // ФИКС: Инициализация сразу
+            const t = e.touches[0]; drag.x = t.clientX; drag.y = t.clientY;
+            updateDragCoords();
             tg.HapticFeedback.impactOccurred('light'); 
         };
         slot.appendChild(cvs);
     }
 
+    function updateDragCoords() {
+        const r = canvas.getBoundingClientRect(); const p = pieces[drag.idx];
+        drag.gx = Math.round((drag.x - r.left - (p.shape[0].length * cellSize)/2) / cellSize);
+        drag.gy = Math.round((drag.y - r.top - (p.shape.length * cellSize) - cellSize*0.6) / cellSize);
+    }
+
     window.ontouchmove = (e) => {
         if(!drag.active) return;
         drag.x = e.touches[0].clientX; drag.y = e.touches[0].clientY;
-        const r = canvas.getBoundingClientRect(); const p = pieces[drag.idx];
-        // ФИКС КООРДИНАТ: Теперь используется Math.round для точности после сбития
-        drag.gx = Math.round((drag.x - r.left - (p.shape[0].length * cellSize)/2) / cellSize);
-        drag.gy = Math.round((drag.y - r.top - (p.shape.length * cellSize) - cellSize*0.5) / cellSize);
+        updateDragCoords();
     };
 
     window.ontouchend = () => {
@@ -174,7 +168,8 @@
         if(canP(drag.gx, drag.gy, pieces[drag.idx].shape)) {
             const p = pieces[drag.idx];
             p.shape.forEach((r,y)=>r.forEach((v,x)=>{ if(v) board[drag.gy+y][drag.gx+x] = p.color; }));
-            p.used = true; score += 1; document.getElementById(`s${drag.idx}`).innerHTML = '';
+            p.used = true; score += 1;
+            document.getElementById(`s${drag.idx}`).innerHTML = '';
             checkMatch(); if(pieces.every(p=>p.used)) spawn(); else checkGO();
             tg.HapticFeedback.impactOccurred('medium');
         }
@@ -183,12 +178,8 @@
 
     function canP(gx, gy, sh) {
         if(gx<0 || gy<0 || gx+sh[0].length>GRID || gy+sh.length>GRID) return false;
-        for(let y=0; y<sh.length; y++) {
-            for(let x=0; x<sh[y].length; x++) {
-                if(sh[y][x]) {
-                    if(board[gy+y][gx+x] !== null) return false;
-                }
-            }
+        for(let y=0; y<sh.length; y++) for(let x=0; x<sh[y].length; x++) {
+            if(sh[y][x] && board[gy+y][gx+x]) return false;
         }
         return true;
     }
@@ -197,14 +188,12 @@
         let rF = [], cF = [];
         for(let i=0; i<GRID; i++) {
             if(board[i].every(v=>v!==null)) rF.push(i);
-            let colFull = true;
-            for(let j=0; j<GRID; j++) if(board[j][i] === null) colFull = false;
-            if(colFull) cF.push(i);
+            let c = true; for(let j=0; j<GRID; j++) if(!board[j][i]) c = false; if(c) cF.push(i);
         }
-        rF.forEach(y => { for(let x=0; x<GRID; x++){ anims.push({x,y,c:board[y][x],s:1}); board[y][x]=null; } score+=3; xp+=1; });
-        cF.forEach(x => { for(let y=0; y<GRID; y++){ if(board[y][x]){ anims.push({x,y,c:board[y][x],s:1}); board[y][x]=null; } } score+=3; xp+=1; });
-        if(rF.length + cF.length >= 2) floating.push({x:cellSize*4, y:cellSize*3, t:`КОМБО!`, l:1});
-        if(xp >= getNeeded()){ xp-=getNeeded(); lvl++; }
+        rF.forEach(y => { for(let x=0; x<GRID; x++){ anims.push({x,y,c:board[y][x]}); board[y][x]=null; } score+=3; xp+=1; });
+        cF.forEach(x => { for(let y=0; y<GRID; y++){ if(board[y][x]){ anims.push({x,y,c:board[y][x]}); board[y][x]=null; } } score+=3; xp+=1; });
+        const needed = [0, 1000, 2500, 5000, 10000][lvl] || 20000;
+        if(xp >= needed){ xp=0; lvl++; }
         if(score > best){ best=score; localStorage.setItem('sb_best', best); }
         localStorage.setItem('sb_xp', xp); localStorage.setItem('sb_lvl', lvl);
     }
@@ -212,11 +201,7 @@
     function checkGO() {
         const ok = pieces.some(p => {
             if(!p || p.used) return false;
-            for(let y=0; y<=GRID-p.shape.length; y++) {
-                for(let x=0; x<=GRID-p.shape[0].length; x++) {
-                    if(canP(x,y,p.shape)) return true;
-                }
-            }
+            for(let y=0; y<=GRID-p.shape.length; y++) for(let x=0; x<=GRID-p.shape[0].length; x++) if(canP(x,y,p.shape)) return true;
             return false;
         });
         if(!ok && pieces.some(p=>!p.used)) document.getElementById('gameOver').style.display = 'flex';
@@ -229,11 +214,8 @@
             if(board[y][x]){ ctx.fillStyle = board[y][x]; ctx.beginPath(); ctx.roundRect(x*cellSize+2, y*cellSize+2, cellSize-4, cellSize-4, 6); ctx.fill(); }
         }
         anims = anims.filter(a => {
-            a.s -= 0.07; ctx.fillStyle = a.c; const sz = (cellSize-4)*a.s; const o = (cellSize-sz)/2;
+            if(!a.s) a.s = 1; a.s -= 0.07; ctx.fillStyle = a.c; const sz = (cellSize-4)*a.s; const o = (cellSize-sz)/2;
             ctx.beginPath(); ctx.roundRect(a.x*cellSize+o, a.y*cellSize+o, sz, sz, 6*a.s); ctx.fill(); return a.s > 0;
-        });
-        floating = floating.filter(f => {
-            f.y -= 1; f.l -= 0.02; ctx.globalAlpha = f.l; ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign='center'; ctx.fillText(f.t, f.x, f.y); ctx.globalAlpha = 1; return f.l > 0;
         });
         if(drag.active && canP(drag.gx, drag.gy, pieces[drag.idx].shape)) {
             ctx.fillStyle = 'rgba(255,255,255,0.15)';
@@ -241,7 +223,7 @@
         }
         if(drag.active) {
             dlayer.style.display = 'block'; const p = pieces[drag.idx], dw = p.shape[0].length*cellSize, dh = p.shape.length*cellSize;
-            dlayer.width = dw*dpr; dlayer.height = dh*dpr; dlayer.style.width = dw+'px'; dlayer.style.height = dh+'px';
+            dlayer.width = dw*dpr; dlayer.height = dh*dpr; dlayer.style.width = dw+'px';
             dlayer.style.left = (drag.x - dw/2)+'px'; dlayer.style.top = (drag.y - dh - cellSize*1.3)+'px';
             dctx.setTransform(1,0,0,1,0,0); dctx.scale(dpr, dpr); dctx.fillStyle = p.color;
             p.shape.forEach((r,y)=>r.forEach((v,x)=>{ if(v){ dctx.beginPath(); dctx.roundRect(x*cellSize, y*cellSize, cellSize-4, cellSize-4, 8); dctx.fill(); }}));
